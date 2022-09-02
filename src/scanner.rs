@@ -1,4 +1,5 @@
-use super::token::Literal;
+use super::error;
+use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
 
@@ -23,7 +24,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &[Token] {
+    pub fn scan_tokens(mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -37,7 +38,7 @@ impl Scanner {
             self.line,
         ));
 
-        &self.tokens
+        self.tokens
     }
 
     fn is_at_end(&self) -> bool {
@@ -111,7 +112,7 @@ impl Scanner {
                 } else if Self::is_alpha(c) {
                     self.identifier();
                 } else {
-                    println!("unknown token: {}", c);
+                    error::report(self.line, "", "Unexpected character");
                 }
             }
         }
@@ -164,7 +165,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            println!("Unterminated string at line {}", self.line);
+            error::report(self.line, "", "Unterminated string");
             return;
         }
 

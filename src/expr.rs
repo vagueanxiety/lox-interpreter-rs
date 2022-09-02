@@ -1,7 +1,8 @@
-use super::token::Literal;
+use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
 
+#[derive(Debug)]
 pub enum Expr {
     Literal {
         value: Literal,
@@ -20,10 +21,11 @@ pub enum Expr {
     },
 }
 
-trait Visitor {
+pub trait Visitor {
     type Result;
     fn visit_expr(&self, expr: &Expr) -> Self::Result;
 }
+
 // TODO: hmm, not exactly the same visitor pattern in the book, we use pattern matching here, might be a little slower?
 pub struct AstPrinter;
 impl Visitor for AstPrinter {

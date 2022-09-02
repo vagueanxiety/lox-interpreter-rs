@@ -1,24 +1,8 @@
+use super::literal::Literal;
 use std::fmt;
 
-//#[derive(Debug)]
-pub enum Literal {
-    Empty,
-    StringLiteral(String),
-    NumberLiteral(f64),
-}
-
-impl fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            Literal::Empty => write!(f, "nil"),
-            Literal::StringLiteral(ref s) => write!(f, "{}", s),
-            Literal::NumberLiteral(n) => write!(f, "{}", n),
-        }
-    }
-}
-
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,
@@ -69,11 +53,12 @@ pub enum TokenType {
     EOF,
 }
 
+#[derive(Clone, Debug)]
 pub struct Token {
-    token_type: TokenType,
+    pub token_type: TokenType,
     pub lexeme: String,
-    literal: Literal,
-    line: usize,
+    pub literal: Literal,
+    pub line: usize,
 }
 
 impl Token {
