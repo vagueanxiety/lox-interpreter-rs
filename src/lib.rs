@@ -1,3 +1,5 @@
+mod ast_display;
+mod ast_interpret;
 mod error;
 mod expr;
 mod literal;
@@ -5,10 +7,7 @@ mod parser;
 mod scanner;
 mod token;
 
-use expr::test_ast_printer;
-use expr::AstPrinter;
-use expr::Visitor;
-
+use crate::ast_display::test_ast_printer;
 use parser::Parser;
 use scanner::Scanner;
 use std::io::{self, Write};
@@ -19,9 +18,7 @@ fn run(source: String) {
     //println!("{:?}", tokens);
     let parser = Parser::new(tokens);
     let expr = parser.parse();
-    //println!("{:?}", expr);
-    let p = AstPrinter {};
-    let result = p.visit_expr(&expr);
+    let result = expr.print();
     println!("{result}");
 }
 
