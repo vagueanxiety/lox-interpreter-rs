@@ -1,4 +1,3 @@
-use super::error;
 use super::expr::BinaryExpr;
 use super::expr::Expr;
 use super::expr::GroupingExpr;
@@ -8,8 +7,21 @@ use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
 
-#[derive(Debug, Clone)]
-pub struct ParsingError;
+#[derive(Debug)]
+pub struct ParsingError {
+    pub msg: String,
+}
+
+impl ParsingError {
+    pub fn new(t: &Token, msg: &str) -> ParsingError {
+        let full_msg = if t.token_type == TokenType::EOF {
+            format!("[line {}] Error at end: {}", t.line, msg)
+        } else {
+            format!("[line {}] Error at {}: {}", t.line, t.lexeme, msg)
+        };
+        ParsingError { msg: full_msg }
+    }
+}
 
 type Result<T> = std::result::Result<T, ParsingError>;
 
@@ -71,8 +83,8 @@ impl Parser {
         return false;
     }
 
-    pub fn parse(mut self) -> Box<dyn Expr> {
-        return self.expression().expect("Failed to parse tokens");
+    pub fn parse(mut self) -> Result<Box<dyn Expr>> {
+        return self.expression();
     }
 
     fn expression(&mut self) -> Result<Box<dyn Expr>> {
@@ -181,14 +193,15 @@ impl Parser {
         if self.match_one(TokenType::LEFT_PAREN) {
             let expr = self.expression()?;
             if !self.match_one(TokenType::RIGHT_PAREN) {
-                error::report_token_err(self.peek(), "Expect ')' after expression.");
-                return Err(ParsingError);
+                return Err(ParsingError::new(
+                    self.peek(),
+                    "Expect ')' after expression.",
+                ));
             }
             return Ok(Box::new(GroupingExpr { expr }));
         }
 
-        error::report_token_err(self.peek(), "Expect expression.");
-        return Err(ParsingError);
+        return Err(ParsingError::new(self.peek(), "Expect expression."));
     }
 
     // TODO: unused for now

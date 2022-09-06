@@ -5,7 +5,7 @@ use super::expr::UnaryExpr;
 use super::literal::Literal;
 use super::token::TokenType;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct RuntimeError {
     pub msg: String,
 }

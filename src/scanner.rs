@@ -1,4 +1,3 @@
-use super::error;
 use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
@@ -10,6 +9,21 @@ pub struct Scanner {
     current: usize,
     line: usize,
 }
+
+#[derive(Debug)]
+pub struct ScanningError {
+    pub msg: String,
+}
+
+impl ScanningError {
+    pub fn new(line: usize, msg: &str) -> ScanningError {
+        ScanningError {
+            msg: format!("[line {}] Error: {}", line, msg),
+        }
+    }
+}
+
+type Result<T> = std::result::Result<T, ScanningError>;
 
 impl Scanner {
     pub fn new(source: String) -> Scanner {
@@ -24,10 +38,10 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(mut self) -> Vec<Token> {
+    pub fn scan_tokens(mut self) -> Result<Vec<Token>> {
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token();
+            self.scan_token()?;
         }
 
         // TODO: ugh, constructing new string every time..
@@ -38,14 +52,14 @@ impl Scanner {
             self.line,
         ));
 
-        self.tokens
+        Ok(self.tokens)
     }
 
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<()> {
         let c = self.advance();
         match c {
             '(' => self.add_token(TokenType::LEFT_PAREN, Literal::Empty),
@@ -105,18 +119,18 @@ impl Scanner {
             '\n' => {
                 self.line += 1;
             }
-            '"' => self.string(),
+            '"' => self.string()?,
             _ => {
                 if Self::is_digit(c) {
                     self.number();
                 } else if Self::is_alpha(c) {
                     self.identifier();
                 } else {
-                    // TODO: properly return errors
-                    error::report(self.line, "", "Unexpected character");
+                    return Err(ScanningError::new(self.line, "Unexpected character"));
                 }
             }
         }
+        Ok(())
     }
 
     fn advance(&mut self) -> char {
@@ -157,7 +171,7 @@ impl Scanner {
         self.tokens.push(Token::new(t, text, l, self.line));
     }
 
-    fn string(&mut self) {
+    fn string(&mut self) -> Result<()> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -166,8 +180,8 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            error::report(self.line, "", "Unterminated string");
-            return;
+            // TODO: return error
+            return Err(ScanningError::new(self.line, "Unterminated string"));
         }
 
         self.advance();
@@ -177,6 +191,7 @@ impl Scanner {
             .collect();
 
         self.add_token(TokenType::STRING, Literal::StringLiteral(value));
+        Ok(())
     }
 
     fn is_digit(c: char) -> bool {
