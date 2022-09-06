@@ -18,7 +18,9 @@ fn run(source: String) {
     //println!("{:?}", tokens);
     let parser = Parser::new(tokens);
     let expr = parser.parse();
-    let result = expr.print();
+    let ast = expr.print();
+    println!("{ast}");
+    let result = expr.eval().expect("Failed to evaluate");
     println!("{result}");
 }
 

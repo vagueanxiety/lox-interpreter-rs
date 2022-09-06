@@ -112,6 +112,7 @@ impl Scanner {
                 } else if Self::is_alpha(c) {
                     self.identifier();
                 } else {
+                    // TODO: properly return errors
                     error::report(self.line, "", "Unexpected character");
                 }
             }

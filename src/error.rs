@@ -1,9 +1,6 @@
 use super::token::Token;
 use super::token::TokenType;
 
-#[derive(Debug, Clone)]
-pub struct ParsingError;
-
 pub fn report(line: usize, location: &str, msg: &str) {
     println!("[line {}] Error{}: {}", line, location, msg);
 }

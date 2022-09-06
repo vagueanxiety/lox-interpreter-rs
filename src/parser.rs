@@ -8,7 +8,10 @@ use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
 
-type Result<T> = std::result::Result<T, error::ParsingError>;
+#[derive(Debug, Clone)]
+pub struct ParsingError;
+
+type Result<T> = std::result::Result<T, ParsingError>;
 
 // TODO:
 // contract/assumptions/invariants:
@@ -179,13 +182,13 @@ impl Parser {
             let expr = self.expression()?;
             if !self.match_one(TokenType::RIGHT_PAREN) {
                 error::report_token_err(self.peek(), "Expect ')' after expression.");
-                return Err(error::ParsingError);
+                return Err(ParsingError);
             }
             return Ok(Box::new(GroupingExpr { expr }));
         }
 
         error::report_token_err(self.peek(), "Expect expression.");
-        return Err(error::ParsingError);
+        return Err(ParsingError);
     }
 
     // TODO: unused for now
