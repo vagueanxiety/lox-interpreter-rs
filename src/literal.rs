@@ -30,6 +30,14 @@ impl Literal {
         }
     }
 
+    pub fn revert(self) -> Literal {
+        match self {
+            Literal::BoolLiteral(false) => Literal::BoolLiteral(true),
+            Literal::BoolLiteral(true) => Literal::BoolLiteral(false),
+            x => x,
+        }
+    }
+
     pub fn negative(&self) -> Result<Literal> {
         match *self {
             Literal::NumberLiteral(n) => Ok(Literal::NumberLiteral(-n)),

@@ -51,8 +51,8 @@ fn run(source: String) -> Result<(), LoxError> {
     //println!("{:?}", tokens);
     let parser = Parser::new(tokens);
     let expr = parser.parse()?;
-    let ast = expr.print();
-    println!("{ast}");
+    //let ast = expr.print();
+    //println!("{ast}");
     let result = expr.eval()?;
     println!("{result}");
     Ok(())

@@ -32,7 +32,7 @@ impl AstInterpret for UnaryExpr {
     fn eval(&self) -> Result<Literal> {
         let rhs = self.right.eval()?;
         match self.operator.token_type {
-            TokenType::BANG => Ok(rhs.is_truthy()),
+            TokenType::BANG => Ok(rhs.is_truthy().revert()),
             TokenType::MINUS => match rhs.negative() {
                 Ok(x) => Ok(x),
                 _ => Err(RuntimeError {
