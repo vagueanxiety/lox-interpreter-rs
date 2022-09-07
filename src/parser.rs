@@ -6,11 +6,21 @@ use super::expr::UnaryExpr;
 use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
+use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct ParsingError {
     pub msg: String,
 }
+
+impl fmt::Display for ParsingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl Error for ParsingError {}
 
 impl ParsingError {
     pub fn new(t: &Token, msg: &str) -> ParsingError {
@@ -204,6 +214,7 @@ impl Parser {
         return Err(ParsingError::new(self.peek(), "Expect expression."));
     }
 
+    #[allow(dead_code)]
     // TODO: unused for now
     fn synchronize(&mut self) {
         self.advance();

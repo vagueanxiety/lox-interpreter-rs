@@ -1,6 +1,8 @@
 use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
+use std::error::Error;
+use std::fmt;
 
 pub struct Scanner {
     source: Vec<char>,
@@ -14,6 +16,14 @@ pub struct Scanner {
 pub struct ScanningError {
     pub msg: String,
 }
+
+impl fmt::Display for ScanningError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl Error for ScanningError {}
 
 impl ScanningError {
     pub fn new(line: usize, msg: &str) -> ScanningError {

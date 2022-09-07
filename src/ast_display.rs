@@ -38,6 +38,7 @@ impl AstDisplay for GroupingExpr {
     }
 }
 
+#[allow(dead_code)]
 pub fn test_ast_printer() {
     let minus_token = Token::new(TokenType::MINUS, String::from("-"), Literal::Empty, 0);
     let lhs = Box::new(UnaryExpr {

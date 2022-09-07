@@ -4,11 +4,21 @@ use super::expr::LiteralExpr;
 use super::expr::UnaryExpr;
 use super::literal::Literal;
 use super::token::TokenType;
+use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct RuntimeError {
     pub msg: String,
 }
+
+impl fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl Error for RuntimeError {}
 
 type Result<T> = std::result::Result<T, RuntimeError>;
 
