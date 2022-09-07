@@ -16,7 +16,7 @@ pub struct ParsingError {
 
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.msg)
+        write!(f, "ParsingError: {}", self.msg)
     }
 }
 

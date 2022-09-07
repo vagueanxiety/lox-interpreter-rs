@@ -19,7 +19,7 @@ pub struct ScanningError {
 
 impl fmt::Display for ScanningError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.msg)
+        write!(f, "ScanningError: {}", self.msg)
     }
 }
 

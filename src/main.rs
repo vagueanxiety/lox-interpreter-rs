@@ -12,6 +12,7 @@ fn main() {
         None => run_prompt(),
     };
 }
+
 pub fn run_prompt() {
     println!(
         r"
