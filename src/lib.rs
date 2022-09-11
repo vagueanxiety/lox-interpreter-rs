@@ -1,9 +1,12 @@
-mod ast_display;
-mod ast_interpret;
 mod expr;
+mod expr_display;
+mod expr_interpret;
 mod literal;
 mod parser;
 mod scanner;
+mod statement;
+mod stmt_display;
+mod stmt_interpret;
 mod token;
 
 use parser::Parser;
@@ -15,10 +18,10 @@ pub fn run(source: String) -> Result<(), Box<dyn Error>> {
     let tokens = scanner.scan_tokens()?;
     //println!("{:?}", tokens);
     let parser = Parser::new(tokens);
-    let expr = parser.parse()?;
-    let ast = expr.print();
-    println!("{ast}");
-    let result = expr.eval()?;
-    println!("{result}");
+    let statements = parser.parse()?;
+    for s in statements {
+        println!("{s}");
+        s.eval()?;
+    }
     Ok(())
 }

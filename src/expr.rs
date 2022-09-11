@@ -1,10 +1,10 @@
-use super::ast_display::AstDisplay;
-use super::ast_interpret::AstInterpret;
+use super::expr_interpret::ExprInterpret;
 use super::literal::Literal;
 use super::token::Token;
+use std::fmt::Display;
 
-pub trait Expr: AstDisplay + AstInterpret {}
-impl<T: AstDisplay + AstInterpret> Expr for T {}
+pub trait Expr: Display + ExprInterpret {}
+impl<T: Display + ExprInterpret> Expr for T {}
 
 pub struct LiteralExpr {
     pub value: Literal,

@@ -1,9 +1,6 @@
-use super::expr::BinaryExpr;
-use super::expr::Expr;
-use super::expr::GroupingExpr;
-use super::expr::LiteralExpr;
-use super::expr::UnaryExpr;
+use super::expr::*;
 use super::literal::Literal;
+use super::statement::*;
 use super::token::Token;
 use super::token::TokenType;
 use std::error::Error;
@@ -93,8 +90,39 @@ impl Parser {
         return false;
     }
 
-    pub fn parse(mut self) -> Result<Box<dyn Expr>> {
-        return self.expression();
+    pub fn parse(mut self) -> Result<Vec<Box<dyn Stmt>>> {
+        let mut statements = vec![];
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+        return Ok(statements);
+    }
+
+    fn statement(&mut self) -> Result<Box<dyn Stmt>> {
+        if self.match_one(TokenType::PRINT) {
+            return self.print_statement();
+        }
+
+        return self.expr_statement();
+    }
+
+    fn print_statement(&mut self) -> Result<Box<dyn Stmt>> {
+        let expr = self.expression()?;
+        if !self.match_one(TokenType::SEMICOLON) {
+            return Err(ParsingError::new(self.peek(), "Expect ';' after value."));
+        }
+        return Ok(Box::new(PrintStmt { expr }));
+    }
+
+    fn expr_statement(&mut self) -> Result<Box<dyn Stmt>> {
+        let expr = self.expression()?;
+        if !self.match_one(TokenType::SEMICOLON) {
+            return Err(ParsingError::new(
+                self.peek(),
+                "Expect ';' after expression.",
+            ));
+        }
+        return Ok(Box::new(ExprStmt { expr }));
     }
 
     fn expression(&mut self) -> Result<Box<dyn Expr>> {

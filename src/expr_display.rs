@@ -5,36 +5,29 @@ use super::expr::UnaryExpr;
 use super::literal::Literal;
 use super::token::Token;
 use super::token::TokenType;
+use std::fmt::Display;
 
-pub trait AstDisplay {
-    fn print(&self) -> String;
-}
-
-impl AstDisplay for LiteralExpr {
-    fn print(&self) -> String {
-        format!("{}", self.value)
+impl Display for LiteralExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 
-impl AstDisplay for BinaryExpr {
-    fn print(&self) -> String {
-        let lhs = self.left.print();
-        let rhs = self.right.print();
-        format!("({} {} {})", self.operator.lexeme, lhs, rhs)
+impl Display for BinaryExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} {} {})", self.operator.lexeme, self.left, self.right)
     }
 }
 
-impl AstDisplay for UnaryExpr {
-    fn print(&self) -> String {
-        let rhs = self.right.print();
-        format!("({} {})", self.operator.lexeme, rhs)
+impl Display for UnaryExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} {})", self.operator.lexeme, self.right)
     }
 }
 
-impl AstDisplay for GroupingExpr {
-    fn print(&self) -> String {
-        let e = self.expr.print();
-        format!("(group {})", e)
+impl Display for GroupingExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(group {})", self.expr)
     }
 }
 
@@ -59,6 +52,5 @@ pub fn test_ast_printer() {
         right: rhs,
     };
 
-    let result = e.print();
-    println!("{result}");
+    println!("{e}");
 }

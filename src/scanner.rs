@@ -190,7 +190,6 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            // TODO: return error
             return Err(ScanningError::new(self.line, "Unterminated string"));
         }
 

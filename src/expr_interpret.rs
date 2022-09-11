@@ -22,23 +22,23 @@ impl Error for RuntimeError {}
 
 type Result<T> = std::result::Result<T, RuntimeError>;
 
-pub trait AstInterpret {
+pub trait ExprInterpret {
     fn eval(&self) -> Result<Literal>;
 }
 
-impl AstInterpret for LiteralExpr {
+impl ExprInterpret for LiteralExpr {
     fn eval(&self) -> Result<Literal> {
         Ok(self.value.clone())
     }
 }
 
-impl AstInterpret for GroupingExpr {
+impl ExprInterpret for GroupingExpr {
     fn eval(&self) -> Result<Literal> {
         self.expr.eval()
     }
 }
 
-impl AstInterpret for UnaryExpr {
+impl ExprInterpret for UnaryExpr {
     fn eval(&self) -> Result<Literal> {
         let rhs = self.right.eval()?;
         match self.operator.token_type {
@@ -59,7 +59,7 @@ impl AstInterpret for UnaryExpr {
     }
 }
 
-impl AstInterpret for BinaryExpr {
+impl ExprInterpret for BinaryExpr {
     fn eval(&self) -> Result<Literal> {
         let lhs = self.left.eval()?;
         let rhs = self.right.eval()?;
