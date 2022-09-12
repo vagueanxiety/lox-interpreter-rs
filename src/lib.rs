@@ -21,7 +21,7 @@ pub fn run(source: String) -> Result<(), Box<dyn Error>> {
     let statements = parser.parse()?;
     for s in statements {
         println!("{s}");
-        s.eval()?;
+        s.execute()?;
     }
     Ok(())
 }
