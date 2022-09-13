@@ -90,7 +90,7 @@ impl Parser {
         return false;
     }
 
-    pub fn parse(mut self) -> Result<Vec<Box<dyn Stmt>>> {
+    pub fn parse(mut self) -> Result<Vec<Stmt>> {
         let mut statements = vec![];
         while !self.is_at_end() {
             statements.push(self.statement()?);
@@ -98,7 +98,7 @@ impl Parser {
         return Ok(statements);
     }
 
-    fn statement(&mut self) -> Result<Box<dyn Stmt>> {
+    fn statement(&mut self) -> Result<Stmt> {
         if self.match_one(TokenType::PRINT) {
             return self.print_statement();
         }
@@ -106,15 +106,15 @@ impl Parser {
         return self.expr_statement();
     }
 
-    fn print_statement(&mut self) -> Result<Box<dyn Stmt>> {
+    fn print_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
         if !self.match_one(TokenType::SEMICOLON) {
             return Err(ParsingError::new(self.peek(), "Expect ';' after value."));
         }
-        return Ok(Box::new(PrintStmt { expr }));
+        return Ok(Stmt::PrintStmt(PrintStmt { expr }));
     }
 
-    fn expr_statement(&mut self) -> Result<Box<dyn Stmt>> {
+    fn expr_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
         if !self.match_one(TokenType::SEMICOLON) {
             return Err(ParsingError::new(
@@ -122,30 +122,30 @@ impl Parser {
                 "Expect ';' after expression.",
             ));
         }
-        return Ok(Box::new(ExprStmt { expr }));
+        return Ok(Stmt::ExprStmt(ExprStmt { expr }));
     }
 
-    fn expression(&mut self) -> Result<Box<dyn Expr>> {
+    fn expression(&mut self) -> Result<Box<Expr>> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Result<Box<dyn Expr>> {
+    fn equality(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.comparison()?;
 
         while self.match_one_of(vec![TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
             let token = self.previous().clone();
             let rhs = self.comparison()?;
-            expr = Box::new(BinaryExpr {
+            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
-            })
+            }))
         }
 
         return Ok(expr);
     }
 
-    fn comparison(&mut self) -> Result<Box<dyn Expr>> {
+    fn comparison(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.term()?;
         while self.match_one_of(vec![
             TokenType::GREATER,
@@ -155,77 +155,77 @@ impl Parser {
         ]) {
             let token = self.previous().clone();
             let rhs = self.term()?;
-            expr = Box::new(BinaryExpr {
+            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
-            })
+            }))
         }
 
         return Ok(expr);
     }
 
-    fn term(&mut self) -> Result<Box<dyn Expr>> {
+    fn term(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.factor()?;
         while self.match_one_of(vec![TokenType::PLUS, TokenType::MINUS]) {
             let token = self.previous().clone();
             let rhs = self.factor()?;
-            expr = Box::new(BinaryExpr {
+            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
-            })
+            }))
         }
 
         return Ok(expr);
     }
 
-    fn factor(&mut self) -> Result<Box<dyn Expr>> {
+    fn factor(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.unary()?;
         while self.match_one_of(vec![TokenType::SLASH, TokenType::STAR]) {
             let token = self.previous().clone();
             let rhs = self.unary()?;
-            expr = Box::new(BinaryExpr {
+            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
-            });
+            }));
         }
         return Ok(expr);
     }
 
-    fn unary(&mut self) -> Result<Box<dyn Expr>> {
+    fn unary(&mut self) -> Result<Box<Expr>> {
         if self.match_one_of(vec![TokenType::BANG, TokenType::MINUS]) {
             let token = self.previous().clone();
             let rhs = self.unary()?;
-            return Ok(Box::new(UnaryExpr {
+            return Ok(Box::new(Expr::UnaryExpr(UnaryExpr {
                 operator: token,
                 right: rhs,
-            }));
+            })));
         }
 
         return self.primary();
     }
 
-    fn primary(&mut self) -> Result<Box<dyn Expr>> {
+    fn primary(&mut self) -> Result<Box<Expr>> {
         // booleans are implemented as keywords in the scanner :/
         if self.match_one(TokenType::FALSE) {
-            return Ok(Box::new(LiteralExpr {
+            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
                 value: Literal::BoolLiteral(false),
-            }));
+            })));
         }
 
         if self.match_one(TokenType::TRUE) {
-            return Ok(Box::new(LiteralExpr {
+            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
                 value: Literal::BoolLiteral(true),
-            }));
+            })));
         }
 
         // TODO: is clone bad?
         if self.match_one_of(vec![TokenType::NIL, TokenType::STRING, TokenType::NUMBER]) {
-            return Ok(Box::new(LiteralExpr {
+            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
                 value: self.previous().literal.clone(),
-            }));
+            })));
         }
 
         if self.match_one(TokenType::LEFT_PAREN) {
@@ -236,7 +236,7 @@ impl Parser {
                     "Expect ')' after expression.",
                 ));
             }
-            return Ok(Box::new(GroupingExpr { expr }));
+            return Ok(Box::new(Expr::GroupingExpr(GroupingExpr { expr })));
         }
 
         return Err(ParsingError::new(self.peek(), "Expect expression."));

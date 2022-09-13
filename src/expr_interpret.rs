@@ -20,7 +20,7 @@ impl fmt::Display for RuntimeError {
 
 impl Error for RuntimeError {}
 
-type Result<T> = std::result::Result<T, RuntimeError>;
+pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 pub trait ExprInterpret {
     fn eval(&self) -> Result<Literal>;
