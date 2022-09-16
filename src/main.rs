@@ -1,4 +1,4 @@
-use lox_interpreter_rs::run;
+use lox_interpreter_rs::Interpreter;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
@@ -13,6 +13,7 @@ fn main() {
     };
 }
 
+// TODO: ugh...there should be only one interpreter for the whole session
 pub fn run_prompt() {
     println!(
         r"
@@ -36,6 +37,7 @@ pub fn run_prompt() {
     );
 
     println!("Entering REPL...");
+    let mut interpreter = Interpreter::new();
     loop {
         print!("> ");
         io::stdout().flush().unwrap();
@@ -43,7 +45,7 @@ pub fn run_prompt() {
         io::stdin()
             .read_line(&mut line)
             .expect("Failed to read line");
-        match run(line) {
+        match interpreter.run(line) {
             Err(e) => eprintln!("{e}"),
             _ => {}
         };
@@ -58,7 +60,8 @@ pub fn run_file(file_path: &str) {
         eprintln!("Problem reading file: {err}");
         process::exit(65);
     });
-    run(contents).unwrap_or_else(|err| {
+    let mut interpreter = Interpreter::new();
+    interpreter.run(contents).unwrap_or_else(|err| {
         eprintln!("{err}");
         process::exit(70);
     });

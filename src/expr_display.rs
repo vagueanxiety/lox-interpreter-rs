@@ -24,3 +24,9 @@ impl Display for GroupingExpr {
         write!(f, "(group {})", self.expr)
     }
 }
+
+impl Display for VarExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(var {})", self.token.lexeme)
+    }
+}
