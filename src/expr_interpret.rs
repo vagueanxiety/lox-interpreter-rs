@@ -1,9 +1,5 @@
 use super::environment::Environment;
-use super::expr::BinaryExpr;
-use super::expr::GroupingExpr;
-use super::expr::LiteralExpr;
-use super::expr::UnaryExpr;
-use super::expr::VarExpr;
+use super::expr::*;
 use super::literal::Literal;
 use super::token::TokenType;
 use std::error::Error;
@@ -25,23 +21,23 @@ impl Error for RuntimeError {}
 pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 pub trait ExprInterpret {
-    fn eval(&self, env: &Environment) -> Result<Literal>;
+    fn eval(&self, env: &mut Environment) -> Result<Literal>;
 }
 
 impl ExprInterpret for LiteralExpr {
-    fn eval(&self, _env: &Environment) -> Result<Literal> {
+    fn eval(&self, _env: &mut Environment) -> Result<Literal> {
         Ok(self.value.clone())
     }
 }
 
 impl ExprInterpret for GroupingExpr {
-    fn eval(&self, env: &Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
         self.expr.eval(env)
     }
 }
 
 impl ExprInterpret for UnaryExpr {
-    fn eval(&self, env: &Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
         let rhs = self.right.eval(env)?;
         match self.operator.token_type {
             TokenType::BANG => Ok(rhs.is_truthy().revert()),
@@ -62,7 +58,7 @@ impl ExprInterpret for UnaryExpr {
 }
 
 impl ExprInterpret for BinaryExpr {
-    fn eval(&self, env: &Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
         let lhs = self.left.eval(env)?;
         let rhs = self.right.eval(env)?;
         match self.operator.token_type {
@@ -148,7 +144,15 @@ impl ExprInterpret for BinaryExpr {
 }
 
 impl ExprInterpret for VarExpr {
-    fn eval(&self, env: &Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
         Ok(env.get(&self.token.lexeme)?.clone())
+    }
+}
+
+impl ExprInterpret for AssignExpr {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
+        let value = self.value.eval(env)?;
+        env.assign(self.token.lexeme.clone(), value.clone())?;
+        Ok(value)
     }
 }

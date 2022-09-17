@@ -11,6 +11,7 @@ pub enum Expr {
     UnaryExpr(UnaryExpr),
     GroupingExpr(GroupingExpr),
     VarExpr(VarExpr),
+    AssignExpr(AssignExpr),
 }
 
 pub struct LiteralExpr {
@@ -35,6 +36,11 @@ pub struct VarExpr {
     pub token: Token,
 }
 
+pub struct AssignExpr {
+    pub token: Token,
+    pub value: Box<Expr>,
+}
+
 // TODO: probably should use the crate enum_dispatch
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -44,19 +50,21 @@ impl Display for Expr {
             Expr::UnaryExpr(expr) => write!(f, "{}", expr),
             Expr::GroupingExpr(expr) => write!(f, "{}", expr),
             Expr::VarExpr(expr) => write!(f, "{}", expr),
+            Expr::AssignExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
 
 // TODO: probably should use the crate enum_dispatch
 impl ExprInterpret for Expr {
-    fn eval(&self, env: &Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environment) -> Result<Literal> {
         match self {
             Expr::LiteralExpr(expr) => expr.eval(env),
             Expr::BinaryExpr(expr) => expr.eval(env),
             Expr::UnaryExpr(expr) => expr.eval(env),
             Expr::GroupingExpr(expr) => expr.eval(env),
             Expr::VarExpr(expr) => expr.eval(env),
+            Expr::AssignExpr(expr) => expr.eval(env),
         }
     }
 }

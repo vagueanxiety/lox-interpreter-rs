@@ -37,4 +37,15 @@ impl<'a> Environment<'a> {
             }),
         }
     }
+
+    pub fn assign(&mut self, name: String, value: Literal) -> Result<()> {
+        if self.map.contains_key(&name) {
+            self.map.insert(name, value);
+            return Ok(());
+        } else {
+            return Err(RuntimeError {
+                msg: format!("Undefined variable '{}'", name),
+            });
+        }
+    }
 }
