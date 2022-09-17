@@ -13,7 +13,6 @@ fn main() {
     };
 }
 
-// TODO: ugh...there should be only one interpreter for the whole session
 pub fn run_prompt() {
     println!(
         r"

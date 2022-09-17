@@ -24,7 +24,7 @@ impl ParsingError {
         let full_msg = if t.token_type == TokenType::EOF {
             format!("[line {}] Error at end: {}", t.line, msg)
         } else {
-            format!("[line {}] Error at {}: {}", t.line, t.lexeme, msg)
+            format!("[line {}] Error at '{}': {}", t.line, t.lexeme, msg)
         };
         ParsingError { msg: full_msg }
     }
@@ -91,11 +91,18 @@ impl Parser {
         return None;
     }
 
-    // TODO: use synchronize here
     pub fn parse(mut self) -> Result<Vec<Stmt>> {
         let mut statements = vec![];
         while !self.is_at_end() {
-            statements.push(self.declaration()?);
+            match self.declaration() {
+                Ok(s) => statements.push(s),
+                Err(e) => {
+                    // still prints the error for now
+                    eprintln!("{e}");
+                    self.synchronize();
+                    continue;
+                }
+            }
         }
         return Ok(statements);
     }
@@ -288,8 +295,6 @@ impl Parser {
         return Err(ParsingError::new(self.peek(), "Expect expression."));
     }
 
-    #[allow(dead_code)]
-    // TODO: unused for now
     fn synchronize(&mut self) {
         let mut t = self.advance();
         while t.token_type != TokenType::SEMICOLON && !self.is_at_end() {

@@ -127,6 +127,7 @@ impl Scanner {
                 // ignore whitespace
             }
             '\n' => {
+                // TODO: can we should the correct line number for errors like "missing semicolon"?
                 self.line += 1;
             }
             '"' => self.string()?,
