@@ -12,7 +12,7 @@ pub struct Environments {
 impl Environments {
     pub fn new() -> Environments {
         Environments {
-            chain: vec![HashMap::new()],
+            chain: vec![Environment::new()],
         }
     }
 
@@ -47,7 +47,7 @@ impl Environments {
     }
 
     pub fn push(&mut self) {
-        self.chain.push(HashMap::new());
+        self.chain.push(Environment::new());
     }
 
     pub fn pop(&mut self) {
