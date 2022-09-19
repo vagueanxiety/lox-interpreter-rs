@@ -32,11 +32,7 @@ impl ParsingError {
 
 type Result<T> = std::result::Result<T, ParsingError>;
 
-// TODO:
-// contract/assumptions/invariants:
-// - tokens has at least 2 elements
-// - current always points to a valid element in tokens
-// - first previous call only occurs after advance
+// Note that tokens need to always end with an EOF token
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -59,18 +55,12 @@ impl Parser {
         self.check(TokenType::EOF)
     }
 
-    // TODO: since previous might fail, so it should not be called
-    // directly by functions other than advance
-    fn previous(&self) -> &Token {
-        &self.tokens[self.current - 1]
-    }
-
     fn advance(&mut self) -> &Token {
         if self.is_at_end() {
             return self.peek();
         } else {
             self.current += 1;
-            return self.previous();
+            return &self.tokens[self.current - 1];
         }
     }
 
@@ -142,9 +132,24 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt> {
-        match self.match_one(TokenType::PRINT) {
-            Some(_) => self.print_statement(),
-            None => self.expr_statement(),
+        if self.match_one(TokenType::PRINT).is_some() {
+            self.print_statement()
+        } else if self.match_one(TokenType::LEFT_BRACE).is_some() {
+            self.block_statement()
+        } else {
+            self.expr_statement()
+        }
+    }
+
+    fn block_statement(&mut self) -> Result<Stmt> {
+        let mut statements = vec![];
+        while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+
+        match self.match_one(TokenType::RIGHT_BRACE) {
+            Some(_) => Ok(Stmt::BlockStmt(BlockStmt { statements })),
+            None => Err(ParsingError::new(self.peek(), "Expect '}' after block.")),
         }
     }
 
@@ -173,8 +178,8 @@ impl Parser {
 
     fn assignment(&mut self) -> Result<Box<Expr>> {
         let expr = self.equality()?;
-        match self.match_one(TokenType::EQUAL) {
-            Some(t) => match *expr {
+        if let Some(t) = self.match_one(TokenType::EQUAL) {
+            match *expr {
                 Expr::VarExpr(e) => {
                     let value = self.assignment()?;
                     return Ok(Box::new(Expr::AssignExpr(AssignExpr {
@@ -185,9 +190,9 @@ impl Parser {
                 _ => {
                     return Err(ParsingError::new(t, "Invalid assignment target."));
                 }
-            },
-            None => Ok(expr),
+            }
         }
+        return Ok(expr);
     }
 
     fn equality(&mut self) -> Result<Box<Expr>> {

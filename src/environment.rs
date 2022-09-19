@@ -3,49 +3,73 @@ use super::expr_interpret::RuntimeError;
 use super::literal::Literal;
 use std::collections::HashMap;
 
-pub struct Environment<'a> {
-    enclosing: Option<&'a Environment<'a>>,
-    map: HashMap<String, Literal>,
+type Environment = HashMap<String, Literal>;
+
+pub struct Environments {
+    chain: Vec<Environment>,
 }
 
-impl<'a> Environment<'a> {
-    pub fn new() -> Environment<'a> {
-        Environment {
-            enclosing: None,
-            map: HashMap::new(),
-        }
-    }
-
-    // TODO: unused until scoping is done
-    #[allow(dead_code)]
-    pub fn from(enclosing: &'a Environment) -> Environment<'a> {
-        Environment {
-            enclosing: Some(enclosing),
-            map: HashMap::new(),
+impl Environments {
+    pub fn new() -> Environments {
+        Environments {
+            chain: vec![HashMap::new()],
         }
     }
 
     pub fn define(&mut self, name: String, value: Literal) {
-        self.map.insert(name, value);
+        // Need to maintain some invariants
+        let length = self.chain.len();
+        if length == 0 {
+            panic!("No environment in the chain")
+        }
+        self.chain[length - 1].insert(name, value);
     }
 
     pub fn get(&self, name: &str) -> Result<&Literal> {
-        match self.map.get(name) {
-            Some(l) => Ok(l),
-            None => Err(RuntimeError {
+        if let Some(literal) = self.find(name) {
+            Ok(literal)
+        } else {
+            Err(RuntimeError {
                 msg: format!("Undefined variable '{}'", name),
-            }),
+            })
         }
     }
 
-    pub fn assign(&mut self, name: String, value: Literal) -> Result<()> {
-        if self.map.contains_key(&name) {
-            self.map.insert(name, value);
-            return Ok(());
+    pub fn assign(&mut self, name: &str, value: Literal) -> Result<()> {
+        if let Some(literal) = self.find_mut(name) {
+            *literal = value;
+            Ok(())
         } else {
-            return Err(RuntimeError {
+            Err(RuntimeError {
                 msg: format!("Undefined variable '{}'", name),
-            });
+            })
         }
+    }
+
+    pub fn push(&mut self) {
+        self.chain.push(HashMap::new());
+    }
+
+    pub fn pop(&mut self) {
+        self.chain.pop();
+    }
+
+    fn find(&self, name: &str) -> Option<&Literal> {
+        for env in self.chain.iter().rev() {
+            if let Some(l) = env.get(name) {
+                return Some(l);
+            }
+        }
+
+        return None;
+    }
+
+    fn find_mut(&mut self, name: &str) -> Option<&mut Literal> {
+        for env in self.chain.iter_mut().rev() {
+            if let Some(l) = env.get_mut(name) {
+                return Some(l);
+            }
+        }
+        return None;
     }
 }

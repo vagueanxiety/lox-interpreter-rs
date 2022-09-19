@@ -10,7 +10,7 @@ mod stmt_display;
 mod stmt_interpret;
 mod token;
 
-use environment::Environment;
+use environment::Environments;
 use expr_interpret::RuntimeError;
 use parser::Parser;
 use scanner::Scanner;
@@ -18,14 +18,14 @@ use statement::Stmt;
 use std::error::Error;
 use stmt_interpret::StmtInterpret;
 
-pub struct Interpreter<'a> {
-    env: Environment<'a>,
+pub struct Interpreter {
+    env: Environments,
 }
 
-impl<'a> Interpreter<'a> {
-    pub fn new() -> Interpreter<'a> {
+impl Interpreter {
+    pub fn new() -> Interpreter {
         Interpreter {
-            env: Environment::new(),
+            env: Environments::new(),
         }
     }
 

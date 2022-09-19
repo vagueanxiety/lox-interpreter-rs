@@ -1,4 +1,4 @@
-use super::environment::Environment;
+use super::environment::Environments;
 use super::expr_interpret::ExprInterpret;
 use super::expr_interpret::Result;
 use super::literal::Literal;
@@ -57,7 +57,7 @@ impl Display for Expr {
 
 // TODO: probably should use the crate enum_dispatch
 impl ExprInterpret for Expr {
-    fn eval(&self, env: &mut Environment) -> Result<Literal> {
+    fn eval(&self, env: &mut Environments) -> Result<Literal> {
         match self {
             Expr::LiteralExpr(expr) => expr.eval(env),
             Expr::BinaryExpr(expr) => expr.eval(env),
