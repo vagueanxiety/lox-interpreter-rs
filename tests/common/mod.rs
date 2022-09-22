@@ -25,5 +25,8 @@ pub fn run_test(test_name: &str, check_output: bool, check_error: bool) {
         let expected_error =
             fs::read_to_string(format!("{file_name}.e")).expect("Failed to read error file");
         assert_eq!(error_output, expected_error);
+    } else {
+        // not checking errors means expecting it to be empty
+        assert_eq!(error_output, "");
     }
 }
