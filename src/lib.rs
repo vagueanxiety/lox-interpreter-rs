@@ -38,7 +38,6 @@ impl Interpreter {
         let parser = Parser::new(tokens);
         let statements = parser.parse(&mut error_output)?;
         for s in statements {
-            write!(&mut output, "{s}\n")?;
             s.execute(&mut self.env, &mut output)?;
         }
         Ok(())
