@@ -5,6 +5,8 @@ use super::token::Token;
 use super::token::TokenType;
 use std::error::Error;
 use std::fmt;
+use std::io;
+use std::io::Write;
 
 #[derive(Debug)]
 pub struct ParsingError {
@@ -18,6 +20,14 @@ impl fmt::Display for ParsingError {
 }
 
 impl Error for ParsingError {}
+
+impl From<io::Error> for ParsingError {
+    fn from(error: io::Error) -> Self {
+        ParsingError {
+            msg: format!("ParsingError caused by an IO error: {error}"),
+        }
+    }
+}
 
 impl ParsingError {
     pub fn new(t: &Token, msg: &str) -> ParsingError {
@@ -81,14 +91,17 @@ impl Parser {
         return None;
     }
 
-    pub fn parse(mut self) -> Result<Vec<Stmt>> {
+    pub fn parse<T: Write>(mut self, error_output: &mut T) -> Result<Vec<Stmt>> {
         let mut statements = vec![];
         while !self.is_at_end() {
             match self.declaration() {
                 Ok(s) => statements.push(s),
+                // parser now synchronizes after *all* parsing errors
+                // there could be errors after which parser just aborts
+                // and propogates them up the call chain
                 Err(e) => {
                     // still prints the error for now
-                    eprintln!("{e}");
+                    write!(error_output, "{e}\n")?;
                     self.synchronize();
                     continue;
                 }

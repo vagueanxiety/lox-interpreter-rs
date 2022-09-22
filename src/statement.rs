@@ -4,6 +4,7 @@ use super::expr_interpret::RuntimeError;
 use super::stmt_interpret::StmtInterpret;
 use super::token::Token;
 use std::fmt::Display;
+use std::io::Write;
 
 pub enum Stmt {
     ExprStmt(ExprStmt),
@@ -43,12 +44,16 @@ impl Display for Stmt {
 
 // TODO: probably should use the crate enum_dispatch
 impl StmtInterpret for Stmt {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError> {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        output: &mut T,
+    ) -> Result<(), RuntimeError> {
         match self {
-            Stmt::ExprStmt(s) => s.execute(env),
-            Stmt::PrintStmt(s) => s.execute(env),
-            Stmt::VarStmt(s) => s.execute(env),
-            Stmt::BlockStmt(s) => s.execute(env),
+            Stmt::ExprStmt(s) => s.execute(env, output),
+            Stmt::PrintStmt(s) => s.execute(env, output),
+            Stmt::VarStmt(s) => s.execute(env, output),
+            Stmt::BlockStmt(s) => s.execute(env, output),
         }
     }
 }

@@ -4,6 +4,7 @@ use super::literal::Literal;
 use super::token::TokenType;
 use std::error::Error;
 use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub struct RuntimeError {
@@ -17,6 +18,14 @@ impl fmt::Display for RuntimeError {
 }
 
 impl Error for RuntimeError {}
+
+impl From<io::Error> for RuntimeError {
+    fn from(error: io::Error) -> Self {
+        RuntimeError {
+            msg: format!("RuntimeError caused by an IO error: {error}"),
+        }
+    }
+}
 
 pub type Result<T> = std::result::Result<T, RuntimeError>;
 

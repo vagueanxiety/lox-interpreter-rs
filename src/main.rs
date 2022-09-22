@@ -1,7 +1,8 @@
 use lox_interpreter_rs::Interpreter;
 use std::env;
 use std::fs;
-use std::io::{self, Write};
+use std::io;
+use std::io::Write;
 use std::process;
 
 fn main() {
@@ -34,7 +35,6 @@ pub fn run_prompt() {
                                        
 "
     );
-
     println!("Entering REPL...");
     let mut interpreter = Interpreter::new();
     loop {
@@ -44,7 +44,7 @@ pub fn run_prompt() {
         io::stdin()
             .read_line(&mut line)
             .expect("Failed to read line");
-        match interpreter.run(line) {
+        match interpreter.run(line, io::stdout(), io::stderr()) {
             Err(e) => eprintln!("{e}"),
             _ => {}
         };
@@ -60,8 +60,10 @@ pub fn run_file(file_path: &str) {
         process::exit(65);
     });
     let mut interpreter = Interpreter::new();
-    interpreter.run(contents).unwrap_or_else(|err| {
-        eprintln!("{err}");
-        process::exit(70);
-    });
+    interpreter
+        .run(contents, io::stdout(), io::stderr())
+        .unwrap_or_else(|err| {
+            eprintln!("{err}");
+            process::exit(70);
+        });
 }

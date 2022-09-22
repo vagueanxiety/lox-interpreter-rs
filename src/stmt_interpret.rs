@@ -3,21 +3,31 @@ use super::expr_interpret::ExprInterpret;
 use super::expr_interpret::RuntimeError;
 use super::literal::Literal;
 use super::statement::*;
+use std::io::Write;
 
 pub trait StmtInterpret {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError>;
+    fn execute<T: Write>(&self, env: &mut Environments, output: &mut T)
+        -> Result<(), RuntimeError>;
 }
 
 impl StmtInterpret for PrintStmt {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError> {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        output: &mut T,
+    ) -> Result<(), RuntimeError> {
         let value = self.expr.eval(env)?;
-        println!("{value}");
+        write!(output, "{value}\n")?;
         Ok(())
     }
 }
 
 impl StmtInterpret for ExprStmt {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError> {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        _output: &mut T,
+    ) -> Result<(), RuntimeError> {
         self.expr.eval(env)?;
         Ok(())
     }
@@ -25,7 +35,11 @@ impl StmtInterpret for ExprStmt {
 
 // TODO: ugh.. too much copying, maybe use mem::take?
 impl StmtInterpret for VarStmt {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError> {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        _output: &mut T,
+    ) -> Result<(), RuntimeError> {
         match self.expr {
             Some(ref e) => {
                 let value = e.eval(env)?;
@@ -38,12 +52,16 @@ impl StmtInterpret for VarStmt {
 }
 
 impl StmtInterpret for BlockStmt {
-    fn execute(&self, env: &mut Environments) -> Result<(), RuntimeError> {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        output: &mut T,
+    ) -> Result<(), RuntimeError> {
         // Note that it is important to keep the invariant regarding environment
         // Otherwise it might accidentally pop the root env and panic afterwards
         env.push();
         for s in self.statements.iter() {
-            s.execute(env)?
+            s.execute(env, output)?
         }
         env.pop();
         Ok(())
