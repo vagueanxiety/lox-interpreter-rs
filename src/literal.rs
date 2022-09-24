@@ -22,19 +22,11 @@ pub struct OperatorError;
 type Result<T> = std::result::Result<T, OperatorError>;
 
 impl Literal {
-    pub fn is_truthy(&self) -> Literal {
+    pub fn is_truthy(&self) -> bool {
         match *self {
-            Literal::Empty => Literal::BoolLiteral(false),
-            Literal::BoolLiteral(b) => Literal::BoolLiteral(b),
-            _ => Literal::BoolLiteral(true),
-        }
-    }
-
-    pub fn revert(self) -> Literal {
-        match self {
-            Literal::BoolLiteral(false) => Literal::BoolLiteral(true),
-            Literal::BoolLiteral(true) => Literal::BoolLiteral(false),
-            x => x,
+            Literal::Empty => false,
+            Literal::BoolLiteral(b) => b,
+            _ => true,
         }
     }
 

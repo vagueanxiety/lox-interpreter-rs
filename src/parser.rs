@@ -129,8 +129,8 @@ impl Parser {
             match self.match_one(TokenType::SEMICOLON) {
                 Some(_) => {
                     return Ok(Stmt::VarStmt(VarStmt {
-                        token,
-                        expr: initializer,
+                        name: token,
+                        value: initializer,
                     }));
                 }
                 None => {
@@ -145,13 +145,40 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt> {
-        if self.match_one(TokenType::PRINT).is_some() {
+        if self.match_one(TokenType::IF).is_some() {
+            self.if_statement()
+        } else if self.match_one(TokenType::PRINT).is_some() {
             self.print_statement()
         } else if self.match_one(TokenType::LEFT_BRACE).is_some() {
             self.block_statement()
         } else {
             self.expr_statement()
         }
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt> {
+        if self.match_one(TokenType::LEFT_PAREN).is_none() {
+            return Err(ParsingError::new(self.peek(), "Expect '(' after 'if'."));
+        }
+        let condition = self.expression()?;
+        if self.match_one(TokenType::RIGHT_PAREN).is_none() {
+            return Err(ParsingError::new(
+                self.peek(),
+                "Expect ')' after if condition.",
+            ));
+        }
+
+        let then_branch = Box::new(self.statement()?);
+        let mut else_branch = None;
+        if self.match_one(TokenType::ELSE).is_some() {
+            else_branch = Some(Box::new(self.statement()?));
+        }
+
+        Ok(Stmt::IfStmt(IfStmt {
+            condition,
+            then_branch,
+            else_branch,
+        }))
     }
 
     fn block_statement(&mut self) -> Result<Stmt> {
@@ -196,7 +223,7 @@ impl Parser {
                 Expr::VarExpr(e) => {
                     let value = self.assignment()?;
                     return Ok(Box::new(Expr::AssignExpr(AssignExpr {
-                        token: e.token,
+                        name: e.name,
                         value,
                     })));
                 }
@@ -312,7 +339,7 @@ impl Parser {
 
         // variables
         if let Some(t) = self.match_one(TokenType::IDENTIFIER) {
-            return Ok(Box::new(Expr::VarExpr(VarExpr { token: t.clone() })));
+            return Ok(Box::new(Expr::VarExpr(VarExpr { name: t.clone() })));
         }
 
         // grouping

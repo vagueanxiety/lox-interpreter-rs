@@ -33,11 +33,11 @@ pub struct GroupingExpr {
 }
 
 pub struct VarExpr {
-    pub token: Token,
+    pub name: Token,
 }
 
 pub struct AssignExpr {
-    pub token: Token,
+    pub name: Token,
     pub value: Box<Expr>,
 }
 

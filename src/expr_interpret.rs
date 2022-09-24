@@ -49,7 +49,7 @@ impl ExprInterpret for UnaryExpr {
     fn eval(&self, env: &mut Environments) -> Result<Literal> {
         let rhs = self.right.eval(env)?;
         match self.operator.token_type {
-            TokenType::BANG => Ok(rhs.is_truthy().revert()),
+            TokenType::BANG => Ok(Literal::BoolLiteral(rhs.is_truthy())),
             TokenType::MINUS => match rhs.negative() {
                 Ok(x) => Ok(x),
                 _ => Err(RuntimeError {
@@ -154,14 +154,14 @@ impl ExprInterpret for BinaryExpr {
 
 impl ExprInterpret for VarExpr {
     fn eval(&self, env: &mut Environments) -> Result<Literal> {
-        Ok(env.get(&self.token.lexeme)?.clone())
+        Ok(env.get(&self.name.lexeme)?.clone())
     }
 }
 
 impl ExprInterpret for AssignExpr {
     fn eval(&self, env: &mut Environments) -> Result<Literal> {
         let value = self.value.eval(env)?;
-        env.assign(&self.token.lexeme, value.clone())?;
+        env.assign(&self.name.lexeme, value.clone())?;
         Ok(value)
     }
 }

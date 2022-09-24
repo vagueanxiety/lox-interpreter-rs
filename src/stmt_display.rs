@@ -15,9 +15,9 @@ impl Display for ExprStmt {
 
 impl Display for VarStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.expr {
-            Some(ref e) => write!(f, "(new-var {} = {})", self.token.lexeme, e),
-            None => write!(f, "(new-var {})", self.token.lexeme),
+        match self.value {
+            Some(ref e) => write!(f, "(new-var {} = {})", self.name.lexeme, e),
+            None => write!(f, "(new-var {})", self.name.lexeme),
         }
     }
 }
@@ -25,9 +25,23 @@ impl Display for VarStmt {
 impl Display for BlockStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut stmt_string = String::new();
+        // TODO: hmm indentation wouldn't work for nested blocks
         for s in &self.statements {
-            stmt_string = format!("{}  {}\n", stmt_string, s);
+            stmt_string = format!("{}   {}\n", stmt_string, s);
         }
         write!(f, "(block\n{})", stmt_string)
+    }
+}
+
+impl Display for IfStmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.else_branch {
+            Some(ref s) => write!(
+                f,
+                "(if {}\n{}\nelse\n{}\n)",
+                self.condition, self.then_branch, s
+            ),
+            None => write!(f, "(if {}\n{}\n)", self.condition, self.then_branch),
+        }
     }
 }

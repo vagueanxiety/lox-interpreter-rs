@@ -40,12 +40,12 @@ impl StmtInterpret for VarStmt {
         env: &mut Environments,
         _output: &mut T,
     ) -> Result<(), RuntimeError> {
-        match self.expr {
+        match self.value {
             Some(ref e) => {
                 let value = e.eval(env)?;
-                env.define(self.token.lexeme.clone(), value);
+                env.define(self.name.lexeme.clone(), value);
             }
-            None => env.define(self.token.lexeme.clone(), Literal::Empty),
+            None => env.define(self.name.lexeme.clone(), Literal::Empty),
         }
         Ok(())
     }
@@ -65,5 +65,21 @@ impl StmtInterpret for BlockStmt {
         }
         env.pop();
         Ok(())
+    }
+}
+
+impl StmtInterpret for IfStmt {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        output: &mut T,
+    ) -> Result<(), RuntimeError> {
+        if self.condition.eval(env)?.is_truthy() {
+            self.then_branch.execute(env, output)
+        } else if let Some(ref s) = self.else_branch {
+            s.execute(env, output)
+        } else {
+            Ok(())
+        }
     }
 }

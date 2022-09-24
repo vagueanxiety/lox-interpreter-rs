@@ -44,7 +44,7 @@ pub fn run_prompt() {
         io::stdin()
             .read_line(&mut line)
             .expect("Failed to read line");
-        match interpreter.run(line, io::stdout(), io::stderr()) {
+        match interpreter.run(line, io::stdout(), io::stderr(), true) {
             Err(e) => eprintln!("{e}"),
             _ => {}
         };
@@ -61,7 +61,7 @@ pub fn run_file(file_path: &str) {
     });
     let mut interpreter = Interpreter::new();
     interpreter
-        .run(contents, io::stdout(), io::stderr())
+        .run(contents, io::stdout(), io::stderr(), true)
         .unwrap_or_else(|err| {
             eprintln!("{err}");
             process::exit(70);

@@ -10,7 +10,7 @@ pub fn run_test(test_name: &str, check_output: bool, check_error: bool) {
     let mut error_output = Vec::new();
 
     let mut it = Interpreter::new();
-    it.run(input.to_string(), &mut output, &mut error_output)
+    it.run(input.to_string(), &mut output, &mut error_output, false)
         .expect("Interpreter Error");
     let output = String::from_utf8(output).expect("Not UTF-8");
     let error_output = String::from_utf8(error_output).expect("Not UTF-8");

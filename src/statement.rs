@@ -11,6 +11,7 @@ pub enum Stmt {
     PrintStmt(PrintStmt),
     VarStmt(VarStmt),
     BlockStmt(BlockStmt),
+    IfStmt(IfStmt),
 }
 
 pub struct ExprStmt {
@@ -22,12 +23,18 @@ pub struct PrintStmt {
 }
 
 pub struct VarStmt {
-    pub token: Token,
-    pub expr: Option<Box<Expr>>,
+    pub name: Token,
+    pub value: Option<Box<Expr>>,
 }
 
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
+}
+
+pub struct IfStmt {
+    pub condition: Box<Expr>,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>,
 }
 
 // TODO: probably should use the crate enum_dispatch
@@ -38,6 +45,7 @@ impl Display for Stmt {
             Stmt::PrintStmt(s) => write!(f, "{}", s),
             Stmt::VarStmt(s) => write!(f, "{}", s),
             Stmt::BlockStmt(s) => write!(f, "{}", s),
+            Stmt::IfStmt(s) => write!(f, "{}", s),
         }
     }
 }
@@ -54,6 +62,7 @@ impl StmtInterpret for Stmt {
             Stmt::PrintStmt(s) => s.execute(env, output),
             Stmt::VarStmt(s) => s.execute(env, output),
             Stmt::BlockStmt(s) => s.execute(env, output),
+            Stmt::IfStmt(s) => s.execute(env, output),
         }
     }
 }

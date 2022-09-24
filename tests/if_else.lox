@@ -1,0 +1,30 @@
+if (true) {
+  print "true branch";
+}
+
+if (false) {
+  print "true branch";
+} else {
+  print "false branch";
+}
+
+if (nil) {
+  print "true branch";
+} else {
+  print "false branch";
+}
+
+if ("truthy") {
+  print "true branch";
+} else {
+  print "false branch";
+}
+
+var end_of_the_world = true;
+var action;
+if (end_of_the_world) {
+  action = "run!";
+} else {
+  action = "sleep~zzz";
+}
+print action;

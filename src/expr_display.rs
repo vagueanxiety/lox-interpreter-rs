@@ -27,12 +27,12 @@ impl Display for GroupingExpr {
 
 impl Display for VarExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(var {})", self.token.lexeme)
+        write!(f, "(var {})", self.name.lexeme)
     }
 }
 
 impl Display for AssignExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(assign {} {})", self.token.lexeme, self.value)
+        write!(f, "(assign {} {})", self.name.lexeme, self.value)
     }
 }
