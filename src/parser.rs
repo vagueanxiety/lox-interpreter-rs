@@ -91,6 +91,13 @@ impl Parser {
         return None;
     }
 
+    fn consume_one(&mut self, tt: TokenType, error_msg: &str) -> Result<()> {
+        if self.match_one(tt).is_none() {
+            return Err(ParsingError::new(self.peek(), error_msg));
+        }
+        Ok(())
+    }
+
     pub fn parse<T: Write>(mut self, error_output: &mut T) -> Result<Vec<Stmt>> {
         let mut statements = vec![];
         while !self.is_at_end() {
@@ -126,20 +133,15 @@ impl Parser {
                 initializer = Some(self.expression()?);
             }
 
-            match self.match_one(TokenType::SEMICOLON) {
-                Some(_) => {
-                    return Ok(Stmt::VarStmt(VarStmt {
-                        name: token,
-                        value: initializer,
-                    }));
-                }
-                None => {
-                    return Err(ParsingError::new(
-                        self.peek(),
-                        "Expect ';' after variable declaration.",
-                    ));
-                }
-            }
+            self.consume_one(
+                TokenType::SEMICOLON,
+                "Expect ';' after variable declaration.",
+            )?;
+
+            return Ok(Stmt::VarStmt(VarStmt {
+                name: token,
+                value: initializer,
+            }));
         }
         return Err(ParsingError::new(self.peek(), "Expect variable name"));
     }
@@ -149,6 +151,8 @@ impl Parser {
             self.if_statement()
         } else if self.match_one(TokenType::WHILE).is_some() {
             self.while_statetment()
+        } else if self.match_one(TokenType::FOR).is_some() {
+            self.for_statetment()
         } else if self.match_one(TokenType::PRINT).is_some() {
             self.print_statement()
         } else if self.match_one(TokenType::LEFT_BRACE).is_some() {
@@ -158,33 +162,71 @@ impl Parser {
         }
     }
 
-    fn while_statetment(&mut self) -> Result<Stmt> {
-        if self.match_one(TokenType::LEFT_PAREN).is_none() {
-            return Err(ParsingError::new(self.peek(), "Expect '(' after 'while'."));
-        }
-        let condition = self.expression()?;
-        if self.match_one(TokenType::RIGHT_PAREN).is_none() {
-            return Err(ParsingError::new(
-                self.peek(),
-                "Expect ')' after while condition.",
-            ));
+    fn for_statetment(&mut self) -> Result<Stmt> {
+        self.consume_one(TokenType::LEFT_PAREN, "Expect '(' after 'for'.")?;
+
+        let initializer = if self.match_one(TokenType::SEMICOLON).is_some() {
+            None
+        } else if self.match_one(TokenType::VAR).is_some() {
+            Some(self.var_declaration()?)
+        } else {
+            Some(self.expr_statement()?)
+        };
+
+        let condition = if self.check(TokenType::SEMICOLON) {
+            Box::new(Expr::LiteralExpr(LiteralExpr {
+                value: Literal::BoolLiteral(true),
+            }))
+        } else {
+            self.expression()?
+        };
+        self.consume_one(TokenType::SEMICOLON, "Expect ';' after loop condition.")?;
+
+        let increment = if self.check(TokenType::RIGHT_PAREN) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
+        self.consume_one(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.")?;
+
+        // desugaring for loop into block statement + while loop
+        let mut body = self.statement()?;
+
+        // including increment right after while body
+        if let Some(i) = increment {
+            body = Stmt::BlockStmt(BlockStmt {
+                statements: vec![body, Stmt::ExprStmt(ExprStmt { expr: i })],
+            })
         }
 
+        // constructing while
+        let mut while_stmt = Stmt::WhileStmt(WhileStmt {
+            condition,
+            body: Box::new(body),
+        });
+
+        // including initializer right before while statement
+        if let Some(i) = initializer {
+            while_stmt = Stmt::BlockStmt(BlockStmt {
+                statements: vec![i, while_stmt],
+            })
+        }
+
+        Ok(while_stmt)
+    }
+
+    fn while_statetment(&mut self) -> Result<Stmt> {
+        self.consume_one(TokenType::LEFT_PAREN, "Expect '(' after 'while'.")?;
+        let condition = self.expression()?;
+        self.consume_one(TokenType::RIGHT_PAREN, "Expect ')' after while condition.")?;
         let body = Box::new(self.statement()?);
         Ok(Stmt::WhileStmt(WhileStmt { condition, body }))
     }
 
     fn if_statement(&mut self) -> Result<Stmt> {
-        if self.match_one(TokenType::LEFT_PAREN).is_none() {
-            return Err(ParsingError::new(self.peek(), "Expect '(' after 'if'."));
-        }
+        self.consume_one(TokenType::LEFT_PAREN, "Expect '(' after 'if'.")?;
         let condition = self.expression()?;
-        if self.match_one(TokenType::RIGHT_PAREN).is_none() {
-            return Err(ParsingError::new(
-                self.peek(),
-                "Expect ')' after if condition.",
-            ));
-        }
+        self.consume_one(TokenType::RIGHT_PAREN, "Expect ')' after if condition.")?;
 
         let then_branch = Box::new(self.statement()?);
         let mut else_branch = None;
@@ -204,30 +246,20 @@ impl Parser {
         while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
             statements.push(self.declaration()?);
         }
-
-        match self.match_one(TokenType::RIGHT_BRACE) {
-            Some(_) => Ok(Stmt::BlockStmt(BlockStmt { statements })),
-            None => Err(ParsingError::new(self.peek(), "Expect '}' after block.")),
-        }
+        self.consume_one(TokenType::RIGHT_BRACE, "Expect '}' after block.")?;
+        Ok(Stmt::BlockStmt(BlockStmt { statements }))
     }
 
     fn print_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
-        match self.match_one(TokenType::SEMICOLON) {
-            Some(_) => Ok(Stmt::PrintStmt(PrintStmt { expr })),
-            None => Err(ParsingError::new(self.peek(), "Expect ';' after value.")),
-        }
+        self.consume_one(TokenType::SEMICOLON, "Expect ';' after value.")?;
+        Ok(Stmt::PrintStmt(PrintStmt { expr }))
     }
 
     fn expr_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
-        match self.match_one(TokenType::SEMICOLON) {
-            Some(_) => Ok(Stmt::ExprStmt(ExprStmt { expr })),
-            None => Err(ParsingError::new(
-                self.peek(),
-                "Expect ';' after expression.",
-            )),
-        }
+        self.consume_one(TokenType::SEMICOLON, "Expect ';' after expression.")?;
+        Ok(Stmt::ExprStmt(ExprStmt { expr }))
     }
 
     fn expression(&mut self) -> Result<Box<Expr>> {
@@ -393,15 +425,8 @@ impl Parser {
         // grouping
         if self.match_one(TokenType::LEFT_PAREN).is_some() {
             let expr = self.expression()?;
-            match self.match_one(TokenType::RIGHT_PAREN) {
-                Some(_) => return Ok(Box::new(Expr::GroupingExpr(GroupingExpr { expr }))),
-                None => {
-                    return Err(ParsingError::new(
-                        self.peek(),
-                        "Expect ')' after expression.",
-                    ))
-                }
-            }
+            self.consume_one(TokenType::RIGHT_PAREN, "Expect ')' after expression.")?;
+            return Ok(Box::new(Expr::GroupingExpr(GroupingExpr { expr })));
         }
 
         return Err(ParsingError::new(self.peek(), "Expect expression."));
