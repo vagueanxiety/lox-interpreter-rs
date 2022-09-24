@@ -15,12 +15,6 @@ pub fn run_test(test_name: &str, check_output: bool, check_error: bool) {
     let output = String::from_utf8(output).expect("Not UTF-8");
     let error_output = String::from_utf8(error_output).expect("Not UTF-8");
 
-    if check_output {
-        let expected_output =
-            fs::read_to_string(format!("{file_name}.o")).expect("Failed to read output file");
-        assert_eq!(output, expected_output);
-    }
-
     if check_error {
         let expected_error =
             fs::read_to_string(format!("{file_name}.e")).expect("Failed to read error file");
@@ -28,5 +22,11 @@ pub fn run_test(test_name: &str, check_output: bool, check_error: bool) {
     } else {
         // not checking errors means expecting it to be empty
         assert_eq!(error_output, "");
+    }
+
+    if check_output {
+        let expected_output =
+            fs::read_to_string(format!("{file_name}.o")).expect("Failed to read output file");
+        assert_eq!(output, expected_output);
     }
 }
