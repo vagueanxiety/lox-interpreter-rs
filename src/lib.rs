@@ -41,7 +41,7 @@ impl Interpreter {
         let statements = parser.parse(&mut error_output)?;
         for s in statements {
             if print_ast {
-                write!(output, "{s}\n")?;
+                write!(output, "\n{s}\n")?;
             }
             s.execute(&mut self.env, &mut output)?;
         }

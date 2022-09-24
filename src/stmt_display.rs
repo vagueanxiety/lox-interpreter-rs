@@ -25,11 +25,10 @@ impl Display for VarStmt {
 impl Display for BlockStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut stmt_string = String::new();
-        // TODO: hmm indentation wouldn't work for nested blocks
         for s in &self.statements {
-            stmt_string = format!("{}   {}\n", stmt_string, s);
+            stmt_string = format!("{}{}\n", stmt_string, s);
         }
-        write!(f, "(block\n{})", stmt_string)
+        write!(f, "(block-start\n{}block-end)", stmt_string)
     }
 }
 

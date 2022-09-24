@@ -1,28 +1,23 @@
-if (true) {
+var a = true;
+if (a)
   print "true branch";
-}
 
-if (false) {
+if (a == false) 
   print "true branch";
-} else {
+else
   print "false branch";
-}
 
-if (nil) {
-  print "true branch";
-} else {
-  print "false branch";
-}
 
 if ("truthy") {
   print "true branch";
+  a = false;
 } else {
   print "false branch";
 }
 
 var end_of_the_world = true;
 var action;
-if (end_of_the_world) {
+if (end_of_the_world != a) {
   action = "run!";
 } else {
   action = "sleep~zzz";
