@@ -1,6 +1,8 @@
 use super::statement::*;
 use std::fmt::Display;
 
+// TODO: the output of the ast printer is not pretty right now, we need to
+// keep track of indentation information to do pretty print
 impl Display for PrintStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "(print {})", self.expr)
@@ -42,5 +44,11 @@ impl Display for IfStmt {
             ),
             None => write!(f, "(if {}\n{}\n)", self.condition, self.then_branch),
         }
+    }
+}
+
+impl Display for WhileStmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(while {}\n{}\n)", self.condition, self.body)
     }
 }

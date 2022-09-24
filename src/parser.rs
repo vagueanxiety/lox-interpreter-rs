@@ -147,6 +147,8 @@ impl Parser {
     fn statement(&mut self) -> Result<Stmt> {
         if self.match_one(TokenType::IF).is_some() {
             self.if_statement()
+        } else if self.match_one(TokenType::WHILE).is_some() {
+            self.while_statetment()
         } else if self.match_one(TokenType::PRINT).is_some() {
             self.print_statement()
         } else if self.match_one(TokenType::LEFT_BRACE).is_some() {
@@ -154,6 +156,22 @@ impl Parser {
         } else {
             self.expr_statement()
         }
+    }
+
+    fn while_statetment(&mut self) -> Result<Stmt> {
+        if self.match_one(TokenType::LEFT_PAREN).is_none() {
+            return Err(ParsingError::new(self.peek(), "Expect '(' after 'while'."));
+        }
+        let condition = self.expression()?;
+        if self.match_one(TokenType::RIGHT_PAREN).is_none() {
+            return Err(ParsingError::new(
+                self.peek(),
+                "Expect ')' after while condition.",
+            ));
+        }
+
+        let body = Box::new(self.statement()?);
+        Ok(Stmt::WhileStmt(WhileStmt { condition, body }))
     }
 
     fn if_statement(&mut self) -> Result<Stmt> {

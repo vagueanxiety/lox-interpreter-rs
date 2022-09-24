@@ -83,3 +83,16 @@ impl StmtInterpret for IfStmt {
         }
     }
 }
+
+impl StmtInterpret for WhileStmt {
+    fn execute<T: Write>(
+        &self,
+        env: &mut Environments,
+        output: &mut T,
+    ) -> Result<(), RuntimeError> {
+        while self.condition.eval(env)?.is_truthy() {
+            self.body.execute(env, output)?;
+        }
+        Ok(())
+    }
+}
