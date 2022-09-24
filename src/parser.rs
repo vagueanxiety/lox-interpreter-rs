@@ -217,7 +217,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Box<Expr>> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if let Some(t) = self.match_one(TokenType::EQUAL) {
             match *expr {
                 Expr::VarExpr(e) => {
@@ -232,6 +232,36 @@ impl Parser {
                 }
             }
         }
+        return Ok(expr);
+    }
+
+    fn or(&mut self) -> Result<Box<Expr>> {
+        let mut expr = self.and()?;
+        while let Some(t) = self.match_one(TokenType::OR) {
+            let token = t.clone();
+            let rhs = self.and()?;
+            expr = Box::new(Expr::LogicalExpr(LogicalExpr {
+                left: expr,
+                operator: token,
+                right: rhs,
+            }))
+        }
+
+        return Ok(expr);
+    }
+
+    fn and(&mut self) -> Result<Box<Expr>> {
+        let mut expr = self.equality()?;
+        while let Some(t) = self.match_one(TokenType::AND) {
+            let token = t.clone();
+            let rhs = self.equality()?;
+            expr = Box::new(Expr::LogicalExpr(LogicalExpr {
+                left: expr,
+                operator: token,
+                right: rhs,
+            }))
+        }
+
         return Ok(expr);
     }
 

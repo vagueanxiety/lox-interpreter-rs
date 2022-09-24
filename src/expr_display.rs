@@ -36,3 +36,9 @@ impl Display for AssignExpr {
         write!(f, "(assign {} {})", self.name.lexeme, self.value)
     }
 }
+
+impl Display for LogicalExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({} {} {})", self.operator.lexeme, self.left, self.right)
+    }
+}

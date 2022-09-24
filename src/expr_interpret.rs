@@ -165,3 +165,19 @@ impl ExprInterpret for AssignExpr {
         Ok(value)
     }
 }
+
+impl ExprInterpret for LogicalExpr {
+    fn eval(&self, env: &mut Environments) -> Result<Literal> {
+        let lhs = self.left.eval(env)?;
+        if self.operator.token_type == TokenType::OR {
+            if lhs.is_truthy() {
+                return Ok(lhs);
+            }
+        } else {
+            if !lhs.is_truthy() {
+                return Ok(lhs);
+            }
+        }
+        Ok(self.right.eval(env)?)
+    }
+}
