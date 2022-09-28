@@ -91,6 +91,8 @@ impl Parser {
         return None;
     }
 
+    // TODO: would be nice to return the consumed token once Rust's borrow checker
+    // allows NLL problem-case-3-conditional-control-flow-across-functions
     fn consume_one(&mut self, tt: TokenType, error_msg: &str) -> Result<()> {
         if self.match_one(tt).is_none() {
             return Err(ParsingError::new(self.peek(), error_msg));
