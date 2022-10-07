@@ -7,6 +7,7 @@ use std::error::Error;
 use std::fmt;
 use std::io;
 use std::io::Write;
+use std::mem;
 
 #[derive(Debug)]
 pub struct ParsingError {
@@ -65,16 +66,16 @@ impl Parser {
         self.check(TokenType::EOF)
     }
 
-    fn advance(&mut self) -> &Token {
+    fn advance(&mut self) -> Token {
         if self.is_at_end() {
-            return self.peek();
+            return mem::take(&mut self.tokens[self.current]);
         } else {
             self.current += 1;
-            return &self.tokens[self.current - 1];
+            return mem::take(&mut self.tokens[self.current - 1]);
         }
     }
 
-    fn match_one(&mut self, tt: TokenType) -> Option<&Token> {
+    fn match_one(&mut self, tt: TokenType) -> Option<Token> {
         if self.check(tt) {
             return Some(self.advance());
         } else {
@@ -82,7 +83,7 @@ impl Parser {
         }
     }
 
-    fn match_one_of(&mut self, tts: Vec<TokenType>) -> Option<&Token> {
+    fn match_one_of(&mut self, tts: Vec<TokenType>) -> Option<Token> {
         for tt in tts {
             if self.check(tt) {
                 return Some(self.advance());
@@ -93,7 +94,7 @@ impl Parser {
 
     // TODO: could've reused match_one once Rust's borrow checker
     // allows NLL problem-case-3-conditional-control-flow-across-functions
-    fn expect_one(&mut self, tt: TokenType, error_msg: &str) -> Result<&Token> {
+    fn expect_one(&mut self, tt: TokenType, error_msg: &str) -> Result<Token> {
         if self.check(tt) {
             return Ok(self.advance());
         } else {
@@ -128,9 +129,7 @@ impl Parser {
     }
 
     fn var_declaration(&mut self) -> Result<Stmt> {
-        if let Some(t) = self.match_one(TokenType::IDENTIFIER) {
-            let token = t.clone();
-
+        if let Some(token) = self.match_one(TokenType::IDENTIFIER) {
             let mut initializer = None;
             if self.match_one(TokenType::EQUAL).is_some() {
                 initializer = Some(self.expression()?);
@@ -271,7 +270,7 @@ impl Parser {
 
     fn assignment(&mut self) -> Result<Box<Expr>> {
         let expr = self.or()?;
-        if let Some(t) = self.match_one(TokenType::EQUAL) {
+        if let Some(token) = self.match_one(TokenType::EQUAL) {
             match *expr {
                 Expr::VarExpr(e) => {
                     let value = self.assignment()?;
@@ -281,7 +280,7 @@ impl Parser {
                     })));
                 }
                 _ => {
-                    return Err(ParsingError::new(t, "Invalid assignment target."));
+                    return Err(ParsingError::new(&token, "Invalid assignment target."));
                 }
             }
         }
@@ -290,8 +289,7 @@ impl Parser {
 
     fn or(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.and()?;
-        while let Some(t) = self.match_one(TokenType::OR) {
-            let token = t.clone();
+        while let Some(token) = self.match_one(TokenType::OR) {
             let rhs = self.and()?;
             expr = Box::new(Expr::LogicalExpr(LogicalExpr {
                 left: expr,
@@ -305,8 +303,7 @@ impl Parser {
 
     fn and(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.equality()?;
-        while let Some(t) = self.match_one(TokenType::AND) {
-            let token = t.clone();
+        while let Some(token) = self.match_one(TokenType::AND) {
             let rhs = self.equality()?;
             expr = Box::new(Expr::LogicalExpr(LogicalExpr {
                 left: expr,
@@ -321,8 +318,9 @@ impl Parser {
     fn equality(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.comparison()?;
 
-        while let Some(t) = self.match_one_of(vec![TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
-            let token = t.clone();
+        while let Some(token) =
+            self.match_one_of(vec![TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL])
+        {
             let rhs = self.comparison()?;
             expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
@@ -336,13 +334,12 @@ impl Parser {
 
     fn comparison(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.term()?;
-        while let Some(t) = self.match_one_of(vec![
+        while let Some(token) = self.match_one_of(vec![
             TokenType::GREATER,
             TokenType::GREATER_EQUAL,
             TokenType::LESS,
             TokenType::LESS_EQUAL,
         ]) {
-            let token = t.clone();
             let rhs = self.term()?;
             expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
@@ -356,8 +353,7 @@ impl Parser {
 
     fn term(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.factor()?;
-        while let Some(t) = self.match_one_of(vec![TokenType::PLUS, TokenType::MINUS]) {
-            let token = t.clone();
+        while let Some(token) = self.match_one_of(vec![TokenType::PLUS, TokenType::MINUS]) {
             let rhs = self.factor()?;
             expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
@@ -371,8 +367,7 @@ impl Parser {
 
     fn factor(&mut self) -> Result<Box<Expr>> {
         let mut expr = self.unary()?;
-        while let Some(t) = self.match_one_of(vec![TokenType::SLASH, TokenType::STAR]) {
-            let token = t.clone();
+        while let Some(token) = self.match_one_of(vec![TokenType::SLASH, TokenType::STAR]) {
             let rhs = self.unary()?;
             expr = Box::new(Expr::BinaryExpr(BinaryExpr {
                 left: expr,
@@ -385,8 +380,7 @@ impl Parser {
 
     fn unary(&mut self) -> Result<Box<Expr>> {
         match self.match_one_of(vec![TokenType::BANG, TokenType::MINUS]) {
-            Some(t) => {
-                let token = t.clone();
+            Some(token) => {
                 let rhs = self.unary()?;
                 return Ok(Box::new(Expr::UnaryExpr(UnaryExpr {
                     operator: token,
@@ -412,17 +406,17 @@ impl Parser {
         }
 
         // literal values
-        if let Some(t) =
+        if let Some(token) =
             self.match_one_of(vec![TokenType::NIL, TokenType::STRING, TokenType::NUMBER])
         {
             return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
-                value: t.literal.clone(),
+                value: token.literal,
             })));
         }
 
         // variables
-        if let Some(t) = self.match_one(TokenType::IDENTIFIER) {
-            return Ok(Box::new(Expr::VarExpr(VarExpr { name: t.clone() })));
+        if let Some(token) = self.match_one(TokenType::IDENTIFIER) {
+            return Ok(Box::new(Expr::VarExpr(VarExpr { name: token })));
         }
 
         // grouping

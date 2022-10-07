@@ -2,7 +2,7 @@ use super::literal::Literal;
 use std::fmt;
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
     LEFT_PAREN,
@@ -53,7 +53,7 @@ pub enum TokenType {
     EOF,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
@@ -79,5 +79,16 @@ impl fmt::Display for Token {
             "token_type: {:?}, lexeme: {}, literal: {}",
             self.token_type, self.lexeme, self.literal
         )
+    }
+}
+
+impl Default for Token {
+    fn default() -> Self {
+        Token {
+            token_type: TokenType::EOF,
+            lexeme: "".to_string(),
+            literal: Literal::Empty,
+            line: 0,
+        }
     }
 }
