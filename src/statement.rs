@@ -1,4 +1,4 @@
-use super::environment::Environments;
+use super::environment::EnvironmentTree;
 use super::expr::Expr;
 use super::expr_interpret::RuntimeError;
 use super::stmt_interpret::StmtInterpret;
@@ -61,7 +61,7 @@ impl Display for Stmt {
 impl StmtInterpret for Stmt {
     fn execute<T: Write>(
         &self,
-        env: &mut Environments,
+        env: &mut EnvironmentTree,
         output: &mut T,
     ) -> Result<(), RuntimeError> {
         match self {

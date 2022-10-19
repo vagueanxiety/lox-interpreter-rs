@@ -9,20 +9,20 @@ mod statement;
 mod stmt_display;
 mod stmt_interpret;
 mod token;
-use environment::Environments;
+use environment::EnvironmentTree;
 use parser::Parser;
 use scanner::Scanner;
 use std::{error::Error, io::Write};
 use stmt_interpret::StmtInterpret;
 
 pub struct Interpreter {
-    env: Environments,
+    env: EnvironmentTree,
 }
 
 impl Interpreter {
     pub fn new() -> Interpreter {
         Interpreter {
-            env: Environments::new(),
+            env: EnvironmentTree::new(),
         }
     }
 
