@@ -4,11 +4,9 @@ use super::literal::Literal;
 use indextree::Arena;
 use indextree::NodeId;
 use std::collections::HashMap;
-// TODO
-//use std::rc::Rc;
+use std::rc::Rc;
 
-// TODO: Rc<Literal>
-pub type Environment = HashMap<String, Literal>;
+pub type Environment = HashMap<String, Rc<Literal>>;
 
 #[derive(Debug)]
 struct EnvironmentNode {
@@ -95,10 +93,7 @@ impl EnvironmentTree {
 
     // operations
     // TODO: resolver
-
-    // TODO: Rc<Literal>
-    // TODO: error handling
-    pub fn get(&mut self, name: &str) -> Result<&Literal> {
+    pub fn get(&mut self, name: &str) -> Result<&Rc<Literal>> {
         if let Some(nid) = self.nid {
             if let Some(tid) = self.find(nid, name) {
                 if let Some(value) = self.tree[tid].get().map.get(name) {
@@ -112,9 +107,7 @@ impl EnvironmentTree {
         })
     }
 
-    // TODO: Literal
-    // TODO: error handling
-    pub fn assign(&mut self, name: &str, value: Literal) -> Result<()> {
+    pub fn assign(&mut self, name: &str, value: Rc<Literal>) -> Result<()> {
         if let Some(nid) = self.nid {
             if let Some(tid) = self.find(nid, name) {
                 if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(name) {
@@ -131,7 +124,7 @@ impl EnvironmentTree {
 
     // pre-conditions:
     // - tree is not empty
-    pub fn define(&mut self, name: String, value: Literal) {
+    pub fn define(&mut self, name: String, value: Rc<Literal>) {
         let nid = self
             .nid
             .expect("Cannot define variables in an empty EnvironmentTree");

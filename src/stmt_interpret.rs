@@ -5,6 +5,7 @@ use super::expr_interpret::Result;
 use super::literal::Literal;
 use super::statement::*;
 use std::io::Write;
+use std::rc::Rc;
 
 pub trait StmtInterpret {
     fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()>;
@@ -25,7 +26,6 @@ impl StmtInterpret for ExprStmt {
     }
 }
 
-// TODO: ugh.. too much copying, maybe use mem::take?
 impl StmtInterpret for VarStmt {
     fn execute<T: Write>(&self, env: &mut EnvironmentTree, _output: &mut T) -> Result<()> {
         match self.value {
@@ -33,7 +33,7 @@ impl StmtInterpret for VarStmt {
                 let value = e.eval(env)?;
                 env.define(self.name.lexeme.clone(), value);
             }
-            None => env.define(self.name.lexeme.clone(), Literal::Empty),
+            None => env.define(self.name.lexeme.clone(), Rc::new(Literal::Empty)),
         }
         Ok(())
     }

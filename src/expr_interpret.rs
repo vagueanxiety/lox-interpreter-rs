@@ -5,6 +5,7 @@ use super::token::TokenType;
 use std::error::Error;
 use std::fmt;
 use std::io;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct RuntimeError {
@@ -30,28 +31,29 @@ impl From<io::Error> for RuntimeError {
 pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 pub trait ExprInterpret {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal>;
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>>;
 }
 
 impl ExprInterpret for LiteralExpr {
-    fn eval(&self, _env: &mut EnvironmentTree) -> Result<Literal> {
-        Ok(self.value.clone())
+    fn eval(&self, _env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
+        // TODO: error out for function literal
+        Ok(Rc::new(self.value.clone()))
     }
 }
 
 impl ExprInterpret for GroupingExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         self.expr.eval(env)
     }
 }
 
 impl ExprInterpret for UnaryExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         let rhs = self.right.eval(env)?;
         match self.operator.token_type {
-            TokenType::BANG => Ok(Literal::BoolLiteral(rhs.is_truthy())),
+            TokenType::BANG => Ok(Rc::new(Literal::BoolLiteral(rhs.is_truthy()))),
             TokenType::MINUS => match rhs.negative() {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {}, it must be a number",
@@ -67,12 +69,12 @@ impl ExprInterpret for UnaryExpr {
 }
 
 impl ExprInterpret for BinaryExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         let lhs = self.left.eval(env)?;
         let rhs = self.right.eval(env)?;
         match self.operator.token_type {
             TokenType::MINUS => match lhs.minus(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -81,7 +83,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::PLUS => match lhs.plus(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {}, must be two numbers or two strings",
@@ -90,7 +92,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::STAR => match lhs.multiply(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -99,7 +101,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::SLASH => match rhs.divide(&lhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -107,10 +109,10 @@ impl ExprInterpret for BinaryExpr {
                     ),
                 }),
             },
-            TokenType::EQUAL_EQUAL => Ok(lhs.equal(&rhs)),
-            TokenType::BANG_EQUAL => Ok(lhs.not_equal(&rhs)),
+            TokenType::EQUAL_EQUAL => Ok(Rc::new(lhs.equal(&rhs))),
+            TokenType::BANG_EQUAL => Ok(Rc::new(lhs.not_equal(&rhs))),
             TokenType::GREATER => match lhs.greater(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -119,7 +121,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::GREATER_EQUAL => match lhs.greater_equal(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -128,7 +130,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::LESS => match lhs.less(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -137,7 +139,7 @@ impl ExprInterpret for BinaryExpr {
                 }),
             },
             TokenType::LESS_EQUAL => match lhs.less_equal(&rhs) {
-                Ok(x) => Ok(x),
+                Ok(x) => Ok(Rc::new(x)),
                 _ => Err(RuntimeError {
                     msg: format!(
                         "{} cannot be applied to {} and {}, both must be number",
@@ -153,13 +155,13 @@ impl ExprInterpret for BinaryExpr {
 }
 
 impl ExprInterpret for VarExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         Ok(env.get(&self.name.lexeme)?.clone())
     }
 }
 
 impl ExprInterpret for AssignExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         let value = self.value.eval(env)?;
         env.assign(&self.name.lexeme, value.clone())?;
         Ok(value)
@@ -167,7 +169,7 @@ impl ExprInterpret for AssignExpr {
 }
 
 impl ExprInterpret for LogicalExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         let lhs = self.left.eval(env)?;
         if self.operator.token_type == TokenType::OR {
             if lhs.is_truthy() {

@@ -4,6 +4,7 @@ use super::expr_interpret::Result;
 use super::literal::Literal;
 use super::token::Token;
 use std::fmt::Display;
+use std::rc::Rc;
 
 pub enum Expr {
     LiteralExpr(LiteralExpr),
@@ -65,7 +66,7 @@ impl Display for Expr {
 
 // TODO: probably should use the crate enum_dispatch
 impl ExprInterpret for Expr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Literal> {
+    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
         match self {
             Expr::LiteralExpr(expr) => expr.eval(env),
             Expr::BinaryExpr(expr) => expr.eval(env),

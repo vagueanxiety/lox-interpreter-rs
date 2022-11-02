@@ -37,7 +37,6 @@ type Result<T> = std::result::Result<T, ScanningError>;
 
 impl Scanner {
     pub fn new(source: String) -> Scanner {
-        // TODO: ugh, vec of char because there is no efficient charAt in rust?
         let source: Vec<char> = source.chars().collect();
         Scanner {
             source,
@@ -54,7 +53,6 @@ impl Scanner {
             self.scan_token()?;
         }
 
-        // TODO: ugh, constructing new string every time..
         self.tokens.push(Token::new(
             TokenType::EOF,
             String::from(""),
