@@ -8,6 +8,7 @@ use std::fmt;
 use std::io;
 use std::io::Write;
 use std::mem;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ParsingError {
@@ -68,18 +69,18 @@ impl Parser {
 
     fn advance(&mut self) -> Token {
         if self.is_at_end() {
-            return mem::take(&mut self.tokens[self.current]);
+            mem::take(&mut self.tokens[self.current])
         } else {
             self.current += 1;
-            return mem::take(&mut self.tokens[self.current - 1]);
+            mem::take(&mut self.tokens[self.current - 1])
         }
     }
 
     fn match_one(&mut self, tt: TokenType) -> Option<Token> {
         if self.check(tt) {
-            return Some(self.advance());
+            Some(self.advance())
         } else {
-            return None;
+            None
         }
     }
 
@@ -89,16 +90,16 @@ impl Parser {
                 return Some(self.advance());
             }
         }
-        return None;
+        None
     }
 
     // TODO: could've reused match_one once Rust's borrow checker
     // allows NLL problem-case-3-conditional-control-flow-across-functions
     fn expect_one(&mut self, tt: TokenType, error_msg: &str) -> Result<Token> {
         if self.check(tt) {
-            return Ok(self.advance());
+            Ok(self.advance())
         } else {
-            return Err(ParsingError::new(self.peek(), error_msg));
+            Err(ParsingError::new(self.peek(), error_msg))
         }
     }
 
@@ -118,34 +119,77 @@ impl Parser {
                 }
             }
         }
-        return Ok(statements);
+        Ok(statements)
     }
 
     fn declaration(&mut self) -> Result<Stmt> {
-        match self.match_one(TokenType::VAR) {
-            Some(_) => self.var_declaration(),
-            None => self.statement(),
+        if self.match_one(TokenType::FUN).is_some() {
+            self.fun_declaration("function")
+        } else if self.match_one(TokenType::VAR).is_some() {
+            self.var_declaration()
+        } else {
+            self.statement()
         }
     }
 
-    fn var_declaration(&mut self) -> Result<Stmt> {
-        if let Some(token) = self.match_one(TokenType::IDENTIFIER) {
-            let mut initializer = None;
-            if self.match_one(TokenType::EQUAL).is_some() {
-                initializer = Some(self.expression()?);
+    fn fun_declaration(&mut self, kind: &str) -> Result<Stmt> {
+        let name = self.expect_one(TokenType::IDENTIFIER, &format!("Expect {} name.", kind))?;
+        self.expect_one(
+            TokenType::LEFT_PAREN,
+            &format!("Expect '(' afeter {} name.", kind),
+        )?;
+
+        let mut params = vec![];
+        if !self.check(TokenType::RIGHT_PAREN) {
+            loop {
+                if params.len() >= 255 {
+                    return Err(ParsingError::new(
+                        self.peek(),
+                        "Can't have more than 255 parameters.",
+                    ));
+                }
+                params.push(self.expect_one(TokenType::IDENTIFIER, "Expect parameter name")?);
+                if self.match_one(TokenType::COMMA).is_none() {
+                    break;
+                }
             }
-
-            self.expect_one(
-                TokenType::SEMICOLON,
-                "Expect ';' after variable declaration.",
-            )?;
-
-            return Ok(Stmt::VarStmt(VarStmt {
-                name: token,
-                value: initializer,
-            }));
         }
-        return Err(ParsingError::new(self.peek(), "Expect variable name"));
+
+        self.expect_one(TokenType::RIGHT_PAREN, "Expect ')' after parameters.")?;
+        self.expect_one(
+            TokenType::LEFT_BRACE,
+            &format!("Expect '{{' before {} body.", kind),
+        )?;
+
+        let mut body = vec![];
+        while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            body.push(self.declaration()?);
+        }
+        self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after body.")?;
+
+        Ok(Stmt::FunctionStmt(Rc::new(FunctionStmt {
+            name,
+            params,
+            body,
+        })))
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt> {
+        let token = self.expect_one(TokenType::IDENTIFIER, "Expect variable name")?;
+        let mut initializer = None;
+        if self.match_one(TokenType::EQUAL).is_some() {
+            initializer = Some(self.expression()?);
+        }
+
+        self.expect_one(
+            TokenType::SEMICOLON,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::VarStmt(VarStmt {
+            name: token,
+            value: initializer,
+        }))
     }
 
     fn statement(&mut self) -> Result<Stmt> {
@@ -284,7 +328,8 @@ impl Parser {
                 }
             }
         }
-        return Ok(expr);
+
+        Ok(expr)
     }
 
     fn or(&mut self) -> Result<Box<Expr>> {
@@ -298,7 +343,7 @@ impl Parser {
             }))
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn and(&mut self) -> Result<Box<Expr>> {
@@ -312,7 +357,7 @@ impl Parser {
             }))
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Box<Expr>> {
@@ -329,7 +374,7 @@ impl Parser {
             }))
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn comparison(&mut self) -> Result<Box<Expr>> {
@@ -348,7 +393,7 @@ impl Parser {
             }))
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn term(&mut self) -> Result<Box<Expr>> {
@@ -362,7 +407,7 @@ impl Parser {
             }))
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn factor(&mut self) -> Result<Box<Expr>> {
@@ -375,20 +420,56 @@ impl Parser {
                 right: rhs,
             }));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn unary(&mut self) -> Result<Box<Expr>> {
-        match self.match_one_of(vec![TokenType::BANG, TokenType::MINUS]) {
-            Some(token) => {
-                let rhs = self.unary()?;
-                return Ok(Box::new(Expr::UnaryExpr(UnaryExpr {
-                    operator: token,
-                    right: rhs,
-                })));
-            }
-            None => self.primary(),
+        if let Some(token) = self.match_one_of(vec![TokenType::BANG, TokenType::MINUS]) {
+            let rhs = self.unary()?;
+            Ok(Box::new(Expr::UnaryExpr(UnaryExpr {
+                operator: token,
+                right: rhs,
+            })))
+        } else {
+            self.call()
         }
+    }
+
+    fn call(&mut self) -> Result<Box<Expr>> {
+        let mut expr = self.primary()?;
+        loop {
+            if self.match_one(TokenType::LEFT_PAREN).is_some() {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+        Ok(expr)
+    }
+
+    fn finish_call(&mut self, callee: Box<Expr>) -> Result<Box<Expr>> {
+        let mut args = vec![];
+        if !self.check(TokenType::RIGHT_PAREN) {
+            loop {
+                if args.len() >= 255 {
+                    return Err(ParsingError::new(
+                        self.peek(),
+                        "Can't have more than 255 arguments.",
+                    ));
+                }
+                args.push(self.expression()?);
+                if self.match_one(TokenType::COMMA).is_none() {
+                    break;
+                }
+            }
+        }
+
+        let paren = self.expect_one(TokenType::RIGHT_PAREN, "Expect ')' after arguments.")?;
+        Ok(Box::new(Expr::CallExpr(CallExpr {
+            callee,
+            paren,
+            args,
+        })))
     }
 
     fn primary(&mut self) -> Result<Box<Expr>> {
@@ -426,7 +507,7 @@ impl Parser {
             return Ok(Box::new(Expr::GroupingExpr(GroupingExpr { expr })));
         }
 
-        return Err(ParsingError::new(self.peek(), "Expect expression."));
+        Err(ParsingError::new(self.peek(), "Expect expression."))
     }
 
     fn synchronize(&mut self) {

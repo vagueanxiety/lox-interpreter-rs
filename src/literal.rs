@@ -1,19 +1,23 @@
+use super::function::LoxFunction;
 use std::fmt;
-#[derive(Clone, Debug, PartialEq)]
+
+#[derive(Clone, PartialEq)]
 pub enum Literal {
     Empty,
     StringLiteral(String),
     BoolLiteral(bool),
     NumberLiteral(f64),
+    FunctionLiteral(LoxFunction),
 }
 
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Literal::Empty => write!(f, "nil"),
-            Literal::StringLiteral(ref s) => write!(f, "{}", s),
+            Literal::StringLiteral(ref s) => write!(f, "\"{}\"", s),
             Literal::NumberLiteral(n) => write!(f, "{}", n),
             Literal::BoolLiteral(b) => write!(f, "{}", b),
+            Literal::FunctionLiteral(ref fun) => write!(f, "{}", fun),
         }
     }
 }

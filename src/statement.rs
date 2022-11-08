@@ -1,10 +1,10 @@
 use super::environment::EnvironmentTree;
 use super::expr::Expr;
 use super::expr_interpret::RuntimeError;
-use super::stmt_interpret::StmtInterpret;
 use super::token::Token;
 use std::fmt::Display;
 use std::io::Write;
+use std::rc::Rc;
 
 pub enum Stmt {
     ExprStmt(ExprStmt),
@@ -13,6 +13,7 @@ pub enum Stmt {
     BlockStmt(BlockStmt),
     IfStmt(IfStmt),
     WhileStmt(WhileStmt),
+    FunctionStmt(Rc<FunctionStmt>),
 }
 
 pub struct ExprStmt {
@@ -43,6 +44,12 @@ pub struct WhileStmt {
     pub body: Box<Stmt>,
 }
 
+pub struct FunctionStmt {
+    pub name: Token,
+    pub params: Vec<Token>,
+    pub body: Vec<Stmt>,
+}
+
 // TODO: probably should use the crate enum_dispatch
 impl Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,13 +60,13 @@ impl Display for Stmt {
             Stmt::BlockStmt(s) => write!(f, "{}", s),
             Stmt::IfStmt(s) => write!(f, "{}", s),
             Stmt::WhileStmt(s) => write!(f, "{}", s),
+            Stmt::FunctionStmt(s) => write!(f, "{}", s),
         }
     }
 }
 
-// TODO: probably should use the crate enum_dispatch
-impl StmtInterpret for Stmt {
-    fn execute<T: Write>(
+impl Stmt {
+    pub fn execute<T: Write>(
         &self,
         env: &mut EnvironmentTree,
         output: &mut T,
@@ -71,6 +78,7 @@ impl StmtInterpret for Stmt {
             Stmt::BlockStmt(s) => s.execute(env, output),
             Stmt::IfStmt(s) => s.execute(env, output),
             Stmt::WhileStmt(s) => s.execute(env, output),
+            Stmt::FunctionStmt(s) => s.execute(env, output),
         }
     }
 }

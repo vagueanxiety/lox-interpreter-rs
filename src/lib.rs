@@ -2,6 +2,7 @@ mod environment;
 mod expr;
 mod expr_display;
 mod expr_interpret;
+mod function;
 mod literal;
 mod parser;
 mod scanner;
@@ -9,11 +10,11 @@ mod statement;
 mod stmt_display;
 mod stmt_interpret;
 mod token;
+
 use environment::EnvironmentTree;
 use parser::Parser;
 use scanner::Scanner;
 use std::{error::Error, io::Write};
-use stmt_interpret::StmtInterpret;
 
 pub struct Interpreter {
     env: EnvironmentTree,

@@ -42,3 +42,14 @@ impl Display for LogicalExpr {
         write!(f, "({} {} {})", self.operator.lexeme, self.left, self.right)
     }
 }
+
+impl Display for CallExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut arg_string = String::new();
+        for arg in &self.args {
+            arg_string = format!("{}, {}", arg_string, arg);
+        }
+
+        write!(f, "(call {} ({}))", self.callee, arg_string)
+    }
+}

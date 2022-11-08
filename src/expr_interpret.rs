@@ -1,10 +1,13 @@
 use super::environment::EnvironmentTree;
 use super::expr::*;
 use super::literal::Literal;
+use super::token::Token;
 use super::token::TokenType;
+use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;
 use std::io;
+use std::io::Write;
 use std::rc::Rc;
 
 #[derive(Debug)]
@@ -28,149 +31,171 @@ impl From<io::Error> for RuntimeError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, RuntimeError>;
-
-pub trait ExprInterpret {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>>;
+impl RuntimeError {
+    pub fn new(t: &Token, msg: &str) -> RuntimeError {
+        let full_msg = format!("[line {}] {}", t.line, msg);
+        RuntimeError { msg: full_msg }
+    }
 }
 
-impl ExprInterpret for LiteralExpr {
-    fn eval(&self, _env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
+pub type Result<T> = std::result::Result<T, RuntimeError>;
+
+impl LiteralExpr {
+    pub fn eval<T: Write>(
+        &self,
+        _env: &mut EnvironmentTree,
+        _output: &mut T,
+    ) -> Result<Rc<Literal>> {
         // TODO: error out for function literal
         Ok(Rc::new(self.value.clone()))
     }
 }
 
-impl ExprInterpret for GroupingExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        self.expr.eval(env)
+impl GroupingExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        self.expr.eval(env, output)
     }
 }
 
-impl ExprInterpret for UnaryExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        let rhs = self.right.eval(env)?;
+impl UnaryExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let rhs = self.right.eval(env, output)?;
         match self.operator.token_type {
             TokenType::BANG => Ok(Rc::new(Literal::BoolLiteral(rhs.is_truthy()))),
             TokenType::MINUS => match rhs.negative() {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {}, it must be a number",
                         self.operator.lexeme, rhs
                     ),
-                }),
+                )),
             },
-            ref tt => Err(RuntimeError {
-                msg: format!("{:?} is unimplemented", tt),
-            }),
+            ref tt => Err(RuntimeError::new(
+                &self.operator,
+                &format!("{:?} is unimplemented", tt),
+            )),
         }
     }
 }
 
-impl ExprInterpret for BinaryExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        let lhs = self.left.eval(env)?;
-        let rhs = self.right.eval(env)?;
+impl BinaryExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let lhs = self.left.eval(env, output)?;
+        let rhs = self.right.eval(env, output)?;
         match self.operator.token_type {
             TokenType::MINUS => match lhs.minus(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::PLUS => match lhs.plus(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {}, must be two numbers or two strings",
                         self.operator.lexeme, rhs
                     ),
-                }),
+                )),
             },
             TokenType::STAR => match lhs.multiply(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::SLASH => match rhs.divide(&lhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::EQUAL_EQUAL => Ok(Rc::new(lhs.equal(&rhs))),
             TokenType::BANG_EQUAL => Ok(Rc::new(lhs.not_equal(&rhs))),
             TokenType::GREATER => match lhs.greater(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::GREATER_EQUAL => match lhs.greater_equal(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::LESS => match lhs.less(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
             TokenType::LESS_EQUAL => match lhs.less_equal(&rhs) {
                 Ok(x) => Ok(Rc::new(x)),
-                _ => Err(RuntimeError {
-                    msg: format!(
+                _ => Err(RuntimeError::new(
+                    &self.operator,
+                    &format!(
                         "{} cannot be applied to {} and {}, both must be number",
                         self.operator.lexeme, lhs, rhs
                     ),
-                }),
+                )),
             },
-            ref tt => Err(RuntimeError {
-                msg: format!("{:?} is unimplemented", tt),
-            }),
+            ref tt => Err(RuntimeError::new(
+                &self.operator,
+                &format!("{:?} is unimplemented", tt),
+            )),
         }
     }
 }
 
-impl ExprInterpret for VarExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        Ok(env.get(&self.name.lexeme)?.clone())
+impl VarExpr {
+    pub fn eval<T: Write>(
+        &self,
+        env: &mut EnvironmentTree,
+        _output: &mut T,
+    ) -> Result<Rc<Literal>> {
+        Ok(env.get(&self.name)?.clone())
     }
 }
 
-impl ExprInterpret for AssignExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        let value = self.value.eval(env)?;
-        env.assign(&self.name.lexeme, value.clone())?;
+impl AssignExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let value = self.value.eval(env, output)?;
+        env.assign(&self.name, value.clone())?;
         Ok(value)
     }
 }
 
-impl ExprInterpret for LogicalExpr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
-        let lhs = self.left.eval(env)?;
+impl LogicalExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let lhs = self.left.eval(env, output)?;
         if self.operator.token_type == TokenType::OR {
             if lhs.is_truthy() {
                 return Ok(lhs);
@@ -180,6 +205,36 @@ impl ExprInterpret for LogicalExpr {
                 return Ok(lhs);
             }
         }
-        Ok(self.right.eval(env)?)
+        Ok(self.right.eval(env, output)?)
+    }
+}
+
+impl CallExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let callee = self.callee.eval(env, output)?;
+        let mut args = vec![];
+        for arg in &self.args {
+            args.push(arg.eval(env, output)?);
+        }
+
+        if let Literal::FunctionLiteral(fun) = callee.borrow() {
+            if args.len() != fun.arity() {
+                return Err(RuntimeError::new(
+                    &self.paren,
+                    &format!(
+                        "Expected {} arguments but got {}. ",
+                        fun.arity(),
+                        args.len()
+                    ),
+                ));
+            }
+            fun.call(args, env, output)?;
+            Ok(Rc::new(Literal::Empty))
+        } else {
+            Err(RuntimeError::new(
+                &self.paren,
+                "Can only call functions and classes.",
+            ))
+        }
     }
 }

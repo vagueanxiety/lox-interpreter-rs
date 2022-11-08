@@ -1,9 +1,9 @@
 use super::environment::EnvironmentTree;
-use super::expr_interpret::ExprInterpret;
 use super::expr_interpret::Result;
 use super::literal::Literal;
 use super::token::Token;
 use std::fmt::Display;
+use std::io::Write;
 use std::rc::Rc;
 
 pub enum Expr {
@@ -14,6 +14,7 @@ pub enum Expr {
     VarExpr(VarExpr),
     AssignExpr(AssignExpr),
     LogicalExpr(LogicalExpr),
+    CallExpr(CallExpr),
 }
 
 pub struct LiteralExpr {
@@ -49,6 +50,12 @@ pub struct LogicalExpr {
     pub right: Box<Expr>,
 }
 
+pub struct CallExpr {
+    pub callee: Box<Expr>,
+    pub paren: Token,
+    pub args: Vec<Box<Expr>>,
+}
+
 // TODO: probably should use the crate enum_dispatch
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -60,21 +67,23 @@ impl Display for Expr {
             Expr::VarExpr(expr) => write!(f, "{}", expr),
             Expr::AssignExpr(expr) => write!(f, "{}", expr),
             Expr::LogicalExpr(expr) => write!(f, "{}", expr),
+            Expr::CallExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
 
 // TODO: probably should use the crate enum_dispatch
-impl ExprInterpret for Expr {
-    fn eval(&self, env: &mut EnvironmentTree) -> Result<Rc<Literal>> {
+impl Expr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
         match self {
-            Expr::LiteralExpr(expr) => expr.eval(env),
-            Expr::BinaryExpr(expr) => expr.eval(env),
-            Expr::UnaryExpr(expr) => expr.eval(env),
-            Expr::GroupingExpr(expr) => expr.eval(env),
-            Expr::VarExpr(expr) => expr.eval(env),
-            Expr::AssignExpr(expr) => expr.eval(env),
-            Expr::LogicalExpr(expr) => expr.eval(env),
+            Expr::LiteralExpr(expr) => expr.eval(env, output),
+            Expr::BinaryExpr(expr) => expr.eval(env, output),
+            Expr::UnaryExpr(expr) => expr.eval(env, output),
+            Expr::GroupingExpr(expr) => expr.eval(env, output),
+            Expr::VarExpr(expr) => expr.eval(env, output),
+            Expr::AssignExpr(expr) => expr.eval(env, output),
+            Expr::LogicalExpr(expr) => expr.eval(env, output),
+            Expr::CallExpr(expr) => expr.eval(env, output),
         }
     }
 }

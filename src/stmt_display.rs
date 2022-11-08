@@ -52,3 +52,24 @@ impl Display for WhileStmt {
         write!(f, "(while {}\n{}\n)", self.condition, self.body)
     }
 }
+
+impl Display for FunctionStmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut body_string = String::new();
+        for s in &self.body {
+            body_string = format!("{}\n{}", body_string, s);
+        }
+
+        let param_string = self
+            .params
+            .iter()
+            .fold(String::new(), |acc, p| acc + &p.lexeme + " ");
+        let param_string = param_string.trim_end();
+
+        write!(
+            f,
+            "(fun-start {} ({}){}\nfun-end)",
+            self.name.lexeme, param_string, body_string
+        )
+    }
+}

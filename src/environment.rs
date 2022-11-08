@@ -1,6 +1,7 @@
 use super::expr_interpret::Result;
 use super::expr_interpret::RuntimeError;
 use super::literal::Literal;
+use super::token::Token;
 use indextree::Arena;
 use indextree::NodeId;
 use std::collections::HashMap;
@@ -8,7 +9,6 @@ use std::rc::Rc;
 
 pub type Environment = HashMap<String, Rc<Literal>>;
 
-#[derive(Debug)]
 struct EnvironmentNode {
     map: Environment,
     keep_alive: bool,
@@ -16,7 +16,6 @@ struct EnvironmentNode {
 
 // invariants:
 // - cur points to a valid node, or it is None
-#[derive(Debug)]
 pub struct EnvironmentTree {
     tree: Arena<EnvironmentNode>,
     nid: Option<NodeId>,
@@ -93,33 +92,35 @@ impl EnvironmentTree {
 
     // operations
     // TODO: resolver
-    pub fn get(&mut self, name: &str) -> Result<&Rc<Literal>> {
+    pub fn get(&mut self, name: &Token) -> Result<&Rc<Literal>> {
         if let Some(nid) = self.nid {
-            if let Some(tid) = self.find(nid, name) {
-                if let Some(value) = self.tree[tid].get().map.get(name) {
+            if let Some(tid) = self.find(nid, &name.lexeme) {
+                if let Some(value) = self.tree[tid].get().map.get(&name.lexeme) {
                     return Ok(value);
                 }
             }
         }
 
-        Err(RuntimeError {
-            msg: format!("Undefined variable '{}'", name),
-        })
+        Err(RuntimeError::new(
+            name,
+            &format!("Undefined variable '{}'", name),
+        ))
     }
 
-    pub fn assign(&mut self, name: &str, value: Rc<Literal>) -> Result<()> {
+    pub fn assign(&mut self, name: &Token, value: Rc<Literal>) -> Result<()> {
         if let Some(nid) = self.nid {
-            if let Some(tid) = self.find(nid, name) {
-                if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(name) {
+            if let Some(tid) = self.find(nid, &name.lexeme) {
+                if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(&name.lexeme) {
                     *value_ref = value;
                     return Ok(());
                 }
             }
         }
 
-        Err(RuntimeError {
-            msg: format!("Undefined variable '{}'", name),
-        })
+        Err(RuntimeError::new(
+            name,
+            &format!("Undefined variable '{}'", name),
+        ))
     }
 
     // pre-conditions:
