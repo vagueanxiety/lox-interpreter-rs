@@ -1,0 +1,16 @@
+var a = 1;
+{
+  var b = 3;
+  {
+    fun foo(c) {
+      print a + b + c;
+    }
+
+    {
+      var b = 4;
+      foo(b);
+      print b;
+    }
+  }
+}
+
