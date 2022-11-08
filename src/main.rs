@@ -16,26 +16,6 @@ fn main() {
 }
 
 pub fn run_prompt() {
-    println!(
-        r"
-   ,--,                                
-,---.'|       ,----..                  
-|   | :      /   /   \  ,--,     ,--,  
-:   : |     /   .     : |'. \   / .`|  
-|   ' :    .   /   ;.  \; \ `\ /' / ;  
-;   ; '   .   ;   /  ` ;`. \  /  / .'  
-'   | |__ ;   |  ; \ ; | \  \/  / ./   
-|   | :.'||   :  | ; | '  \  \.'  /    
-'   :    ;.   |  ' ' ' :   \  ;  ;     
-|   |  ./ '   ;  \; /  |  / \  \  \    
-;   : ;    \   \  ',  /  ;  /\  \  \   
-|   ,/      ;   :    / ./__;  \  ;  \  
-'---'        \   \ .'  |   : / \  \  ; 
-              `---`    ;   |/   \  ' | 
-                       `---'     `--`  
-                                       
-"
-    );
     println!("Entering REPL...");
     let mut interpreter = Interpreter::new();
     loop {
@@ -45,7 +25,7 @@ pub fn run_prompt() {
         io::stdin()
             .read_line(&mut line)
             .expect("Failed to read line");
-        match interpreter.run(line, io::stdout(), io::stderr(), true) {
+        match interpreter.run(line, io::stdout(), io::stderr(), false) {
             Err(e) => eprintln!("{e}"),
             _ => {}
         };

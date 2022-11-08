@@ -3,6 +3,7 @@ use test_case::test_case;
 
 mod common;
 
+#[test_case("native_fun", true, false; "Native function")]
 #[test_case("fibonacci", true, false; "Recursive fibonacci")]
 #[test_case("early_return", true, false; "Early return statement")]
 #[test_case("simple_closure", true, false; "Simple Closure")]

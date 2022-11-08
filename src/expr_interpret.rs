@@ -207,23 +207,37 @@ impl CallExpr {
             args.push(arg.eval(env, output)?);
         }
 
-        if let Literal::FunctionLiteral(fun) = callee.borrow() {
-            if args.len() != fun.arity() {
-                return Err(RuntimeError::new(
-                    &self.paren,
-                    &format!(
-                        "Expected {} arguments but got {}. ",
-                        fun.arity(),
-                        args.len()
-                    ),
-                ));
+        match callee.borrow() {
+            Literal::FunctionLiteral(fun) => {
+                if args.len() != fun.arity() {
+                    return Err(RuntimeError::new(
+                        &self.paren,
+                        &format!(
+                            "Expected {} arguments but got {}. ",
+                            fun.arity(),
+                            args.len()
+                        ),
+                    ));
+                }
+                Ok(fun.call(args, env, output)?)
             }
-            Ok(fun.call(args, env, output)?)
-        } else {
-            Err(RuntimeError::new(
+            Literal::NativeFunctionLiteral(fun) => {
+                if args.len() != fun.arity() {
+                    return Err(RuntimeError::new(
+                        &self.paren,
+                        &format!(
+                            "Expected {} arguments but got {}. ",
+                            fun.arity(),
+                            args.len()
+                        ),
+                    ));
+                }
+                Ok(fun.call(args)?)
+            }
+            _ => Err(RuntimeError::new(
                 &self.paren,
                 "Can only call functions and classes.",
-            ))
+            )),
         }
     }
 }

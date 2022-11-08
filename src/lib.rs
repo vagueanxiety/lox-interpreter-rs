@@ -12,8 +12,13 @@ mod stmt_interpret;
 mod token;
 
 use environment::EnvironmentTree;
+use function::clock;
+use function::lox;
+use function::NativeFunction;
+use literal::Literal;
 use parser::Parser;
 use scanner::Scanner;
+use std::rc::Rc;
 use std::{error::Error, io::Write};
 use stmt_interpret::ExecError;
 
@@ -23,9 +28,25 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Interpreter {
-        Interpreter {
+        let mut i = Interpreter {
             env: EnvironmentTree::new(),
-        }
+        };
+        i.init();
+        i
+    }
+
+    fn init(&mut self) {
+        let clock_fun = NativeFunction::new("native-fn-clock", 0, clock);
+        self.env.define(
+            "clock".to_string(),
+            Rc::new(Literal::NativeFunctionLiteral(clock_fun)),
+        );
+
+        let lox_fun = NativeFunction::new("native-fn-lox", 0, lox);
+        self.env.define(
+            "lox".to_string(),
+            Rc::new(Literal::NativeFunctionLiteral(lox_fun)),
+        );
     }
 
     // TODO: how can the users of interpreter distinguish between different errors

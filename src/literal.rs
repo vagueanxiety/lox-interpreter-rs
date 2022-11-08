@@ -1,4 +1,5 @@
 use super::function::LoxFunction;
+use super::function::NativeFunction;
 use std::fmt;
 
 #[derive(Clone, PartialEq)]
@@ -8,6 +9,7 @@ pub enum Literal {
     BoolLiteral(bool),
     NumberLiteral(f64),
     FunctionLiteral(LoxFunction),
+    NativeFunctionLiteral(NativeFunction),
 }
 
 impl fmt::Display for Literal {
@@ -18,6 +20,7 @@ impl fmt::Display for Literal {
             Literal::NumberLiteral(n) => write!(f, "{}", n),
             Literal::BoolLiteral(b) => write!(f, "{}", b),
             Literal::FunctionLiteral(ref fun) => write!(f, "{}", fun),
+            Literal::NativeFunctionLiteral(ref fun) => write!(f, "{}", fun),
         }
     }
 }
