@@ -103,7 +103,7 @@ impl EnvironmentTree {
 
         Err(RuntimeError::new(
             name,
-            &format!("Undefined variable '{}'", name),
+            &format!("Undefined variable '{}'", name.lexeme),
         ))
     }
 
@@ -119,7 +119,7 @@ impl EnvironmentTree {
 
         Err(RuntimeError::new(
             name,
-            &format!("Undefined variable '{}'", name),
+            &format!("Undefined variable '{}'", name.lexeme),
         ))
     }
 
