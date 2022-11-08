@@ -34,14 +34,14 @@ impl Interpreter {
         source: String,
         mut output: T,
         mut error_output: U,
-        print_ast: bool,
+        debug: bool,
     ) -> Result<(), Box<dyn Error>> {
         let scanner = Scanner::new(source);
         let tokens = scanner.scan()?;
         let parser = Parser::new(tokens);
         let statements = parser.parse(&mut error_output)?;
         for s in statements {
-            if print_ast {
+            if debug {
                 write!(output, "AST-START\n{s}\nAST-END\n")?;
             }
             s.execute(&mut self.env, &mut output)?;

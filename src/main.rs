@@ -8,6 +8,7 @@ use std::process;
 fn main() {
     let mut args = env::args();
     args.next();
+    // TODO: make debug mode a commnad line argument
     match args.next() {
         Some(file_path) => run_file(&file_path),
         None => run_prompt(),
