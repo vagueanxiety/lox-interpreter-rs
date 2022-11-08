@@ -1,3 +1,4 @@
+use super::environment::Environment;
 use super::environment::EnvironmentTree;
 use super::expr_interpret::Result;
 use super::literal::Literal;
@@ -44,6 +45,8 @@ impl LoxFunction {
         output: &mut T,
     ) -> Result<()> {
         let prev = env.checkout(self.closure);
+
+        env.push(Environment::new());
         for (i, p) in self.declaration.params.iter().enumerate() {
             env.define(p.lexeme.clone(), args[i].clone());
         }
@@ -51,6 +54,8 @@ impl LoxFunction {
         for s in self.declaration.body.iter() {
             s.execute(env, output)?
         }
+        env.pop();
+
         env.checkout(prev);
         Ok(())
     }
