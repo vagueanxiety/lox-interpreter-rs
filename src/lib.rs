@@ -15,6 +15,7 @@ use environment::EnvironmentTree;
 use parser::Parser;
 use scanner::Scanner;
 use std::{error::Error, io::Write};
+use stmt_interpret::ExecError;
 
 pub struct Interpreter {
     env: EnvironmentTree,
@@ -44,7 +45,13 @@ impl Interpreter {
             if debug {
                 write!(output, "AST-START\n{s}\nAST-END\n")?;
             }
-            s.execute(&mut self.env, &mut output)?;
+            match s.execute(&mut self.env, &mut output) {
+                Ok(_) => {}
+                Err(ExecError::Return(_)) => {}
+                Err(ExecError::RuntimeError(error)) => {
+                    return Err(Box::new(error));
+                }
+            }
         }
         Ok(())
     }

@@ -3,6 +3,7 @@ use super::environment::EnvironmentTree;
 use super::expr_interpret::Result;
 use super::literal::Literal;
 use super::statement::FunctionStmt;
+use super::stmt_interpret::ExecError;
 use indextree::NodeId;
 use std::fmt::Display;
 use std::io::Write;
@@ -37,13 +38,12 @@ impl LoxFunction {
         }
     }
 
-    // TODO: return
     pub fn call<T: Write>(
         &self,
         args: Vec<Rc<Literal>>,
         env: &mut EnvironmentTree,
         output: &mut T,
-    ) -> Result<()> {
+    ) -> Result<Rc<Literal>> {
         let prev = env.checkout(self.closure);
 
         env.push(Environment::new());
@@ -51,13 +51,23 @@ impl LoxFunction {
             env.define(p.lexeme.clone(), args[i].clone());
         }
 
+        let mut return_value = Rc::new(Literal::Empty);
         for s in self.declaration.body.iter() {
-            s.execute(env, output)?
+            match s.execute(env, output) {
+                Ok(_) => {}
+                Err(ExecError::Return(value)) => {
+                    return_value = value;
+                    break;
+                }
+                Err(ExecError::RuntimeError(error)) => {
+                    return Err(error);
+                }
+            }
         }
         env.pop();
-
         env.checkout(prev);
-        Ok(())
+
+        Ok(return_value)
     }
 
     pub fn arity(&self) -> usize {

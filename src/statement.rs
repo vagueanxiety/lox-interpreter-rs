@@ -1,6 +1,6 @@
 use super::environment::EnvironmentTree;
 use super::expr::Expr;
-use super::expr_interpret::RuntimeError;
+use super::stmt_interpret::Result;
 use super::token::Token;
 use std::fmt::Display;
 use std::io::Write;
@@ -14,6 +14,7 @@ pub enum Stmt {
     IfStmt(IfStmt),
     WhileStmt(WhileStmt),
     FunctionStmt(Rc<FunctionStmt>),
+    ReturnStmt(ReturnStmt),
 }
 
 pub struct ExprStmt {
@@ -50,6 +51,11 @@ pub struct FunctionStmt {
     pub body: Vec<Stmt>,
 }
 
+pub struct ReturnStmt {
+    pub keyword: Token,
+    pub value: Option<Box<Expr>>,
+}
+
 // TODO: probably should use the crate enum_dispatch
 impl Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -61,16 +67,13 @@ impl Display for Stmt {
             Stmt::IfStmt(s) => write!(f, "{}", s),
             Stmt::WhileStmt(s) => write!(f, "{}", s),
             Stmt::FunctionStmt(s) => write!(f, "{}", s),
+            Stmt::ReturnStmt(s) => write!(f, "{}", s),
         }
     }
 }
 
 impl Stmt {
-    pub fn execute<T: Write>(
-        &self,
-        env: &mut EnvironmentTree,
-        output: &mut T,
-    ) -> Result<(), RuntimeError> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         match self {
             Stmt::ExprStmt(s) => s.execute(env, output),
             Stmt::PrintStmt(s) => s.execute(env, output),
@@ -79,6 +82,7 @@ impl Stmt {
             Stmt::IfStmt(s) => s.execute(env, output),
             Stmt::WhileStmt(s) => s.execute(env, output),
             Stmt::FunctionStmt(s) => s.execute(env, output),
+            Stmt::ReturnStmt(s) => s.execute(env, output),
         }
     }
 }

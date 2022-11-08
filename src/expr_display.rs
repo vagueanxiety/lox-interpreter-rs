@@ -45,10 +45,11 @@ impl Display for LogicalExpr {
 
 impl Display for CallExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut arg_string = String::new();
-        for arg in &self.args {
-            arg_string = format!("{}, {}", arg_string, arg);
-        }
+        let arg_string = self
+            .args
+            .iter()
+            .fold(String::new(), |acc, a| acc + &a.to_string() + " ");
+        let arg_string = arg_string.trim_end();
 
         write!(f, "(call {} ({}))", self.callee, arg_string)
     }

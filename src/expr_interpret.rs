@@ -6,7 +6,6 @@ use super::token::TokenType;
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;
-use std::io;
 use std::io::Write;
 use std::rc::Rc;
 
@@ -23,14 +22,6 @@ impl fmt::Display for RuntimeError {
 
 impl Error for RuntimeError {}
 
-impl From<io::Error> for RuntimeError {
-    fn from(error: io::Error) -> Self {
-        RuntimeError {
-            msg: format!("RuntimeError caused by an IO error: {error}"),
-        }
-    }
-}
-
 impl RuntimeError {
     pub fn new(t: &Token, msg: &str) -> RuntimeError {
         let full_msg = format!("[line {}] {}", t.line, msg);
@@ -46,7 +37,6 @@ impl LiteralExpr {
         _env: &mut EnvironmentTree,
         _output: &mut T,
     ) -> Result<Rc<Literal>> {
-        // TODO: error out for function literal
         Ok(Rc::new(self.value.clone()))
     }
 }
@@ -228,8 +218,7 @@ impl CallExpr {
                     ),
                 ));
             }
-            fun.call(args, env, output)?;
-            Ok(Rc::new(Literal::Empty))
+            Ok(fun.call(args, env, output)?)
         } else {
             Err(RuntimeError::new(
                 &self.paren,

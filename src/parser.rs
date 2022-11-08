@@ -201,11 +201,23 @@ impl Parser {
             self.for_statetment()
         } else if self.match_one(TokenType::PRINT).is_some() {
             self.print_statement()
+        } else if let Some(token) = self.match_one(TokenType::RETURN) {
+            self.return_statement(token)
         } else if self.match_one(TokenType::LEFT_BRACE).is_some() {
             self.block_statement()
         } else {
             self.expr_statement()
         }
+    }
+
+    fn return_statement(&mut self, keyword: Token) -> Result<Stmt> {
+        let mut value = None;
+        if !self.check(TokenType::SEMICOLON) {
+            value = Some(self.expression()?)
+        }
+
+        self.expect_one(TokenType::SEMICOLON, "Expect ';' after return value.")?;
+        Ok(Stmt::ReturnStmt(ReturnStmt { keyword, value }))
     }
 
     fn for_statetment(&mut self) -> Result<Stmt> {

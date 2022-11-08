@@ -1,12 +1,34 @@
 use super::environment::Environment;
 use super::environment::EnvironmentTree;
-use super::expr_interpret::Result;
 use super::expr_interpret::RuntimeError;
 use super::function::LoxFunction;
 use super::literal::Literal;
 use super::statement::*;
+use std::io;
 use std::io::Write;
 use std::rc::Rc;
+
+// TODO: can we shortcircuit success value to avoid this?
+pub enum ExecError {
+    RuntimeError(RuntimeError),
+    Return(Rc<Literal>),
+}
+
+pub type Result<T> = std::result::Result<T, ExecError>;
+
+impl From<io::Error> for ExecError {
+    fn from(error: io::Error) -> Self {
+        ExecError::RuntimeError(RuntimeError {
+            msg: format!("RuntimeError caused by an IO error: {error}"),
+        })
+    }
+}
+
+impl From<RuntimeError> for ExecError {
+    fn from(error: RuntimeError) -> Self {
+        ExecError::RuntimeError(error)
+    }
+}
 
 impl PrintStmt {
     pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
@@ -84,10 +106,20 @@ impl FunctionStmt {
             );
             Ok(())
         } else {
-            Err(RuntimeError::new(
+            Err(ExecError::RuntimeError(RuntimeError::new(
                 &self.name,
                 "Function definition has no surrounding environment",
-            ))
+            )))
+        }
+    }
+}
+
+impl ReturnStmt {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+        if let Some(ref expr) = self.value {
+            Err(ExecError::Return(expr.eval(env, output)?))
+        } else {
+            Err(ExecError::Return(Rc::new(Literal::Empty)))
         }
     }
 }

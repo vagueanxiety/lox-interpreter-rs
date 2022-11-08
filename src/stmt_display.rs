@@ -73,3 +73,12 @@ impl Display for FunctionStmt {
         )
     }
 }
+
+impl Display for ReturnStmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.value {
+            Some(ref value) => write!(f, "(return {})", value),
+            None => write!(f, "(return nil)"),
+        }
+    }
+}
