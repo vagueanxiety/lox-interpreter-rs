@@ -42,7 +42,7 @@ pub fn run_file(file_path: &str) {
     });
     let mut interpreter = Interpreter::new();
     interpreter
-        .run(contents, io::stdout(), io::stderr(), true)
+        .run(contents, io::stdout(), io::stderr(), false)
         .unwrap_or_else(|err| {
             eprintln!("{err}");
             process::exit(70);
