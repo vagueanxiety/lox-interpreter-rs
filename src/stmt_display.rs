@@ -18,7 +18,7 @@ impl Display for ExprStmt {
 impl Display for VarStmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.value {
-            Some(ref e) => write!(f, "(new-var {} = {})", self.name.lexeme, e),
+            Some(ref e) => write!(f, "(new-var {} {})", self.name.lexeme, e),
             None => write!(f, "(new-var {})", self.name.lexeme),
         }
     }

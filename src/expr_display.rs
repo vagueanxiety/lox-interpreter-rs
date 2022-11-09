@@ -1,9 +1,17 @@
 use super::expr::*;
+use super::literal::Literal;
 use std::fmt::Display;
 
 impl Display for LiteralExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
+        match self.value {
+            Literal::Empty => write!(f, "({})", self.value),
+            Literal::StringLiteral(_) => write!(f, "(string \"{}\")", self.value),
+            Literal::NumberLiteral(_) => write!(f, "(number {})", self.value),
+            Literal::BoolLiteral(_) => write!(f, "(bool {})", self.value),
+            Literal::FunctionLiteral(_) => write!(f, "(function {})", self.value),
+            Literal::NativeFunctionLiteral(_) => write!(f, "(native-function {})", self.value),
+        }
     }
 }
 

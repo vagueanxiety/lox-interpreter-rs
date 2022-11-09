@@ -139,7 +139,6 @@ static LOX_ASCII: &str = r"
 '---'        \   \ .'  |   : / \  \  ; 
               `---`    ;   |/   \  ' | 
                        `---'     `--`  
-                                       
 ";
 
 pub fn lox(_args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
