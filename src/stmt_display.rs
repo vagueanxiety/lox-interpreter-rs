@@ -1,6 +1,22 @@
 use super::statement::*;
 use std::fmt::Display;
 
+// TODO: probably should use the crate enum_dispatch
+impl Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Stmt::ExprStmt(s) => write!(f, "{}", s),
+            Stmt::PrintStmt(s) => write!(f, "{}", s),
+            Stmt::VarStmt(s) => write!(f, "{}", s),
+            Stmt::BlockStmt(s) => write!(f, "{}", s),
+            Stmt::IfStmt(s) => write!(f, "{}", s),
+            Stmt::WhileStmt(s) => write!(f, "{}", s),
+            Stmt::FunctionStmt(s) => write!(f, "{}", s),
+            Stmt::ReturnStmt(s) => write!(f, "{}", s),
+        }
+    }
+}
+
 // TODO: the output of the ast printer is not pretty right now, we need to
 // keep track of indentation information to do pretty print
 impl Display for PrintStmt {

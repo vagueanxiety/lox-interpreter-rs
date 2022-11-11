@@ -31,6 +31,22 @@ impl RuntimeError {
 
 pub type Result<T> = std::result::Result<T, RuntimeError>;
 
+// TODO: probably should use the crate enum_dispatch
+impl Expr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        match self {
+            Expr::LiteralExpr(expr) => expr.eval(env, output),
+            Expr::BinaryExpr(expr) => expr.eval(env, output),
+            Expr::UnaryExpr(expr) => expr.eval(env, output),
+            Expr::GroupingExpr(expr) => expr.eval(env, output),
+            Expr::VarExpr(expr) => expr.eval(env, output),
+            Expr::AssignExpr(expr) => expr.eval(env, output),
+            Expr::LogicalExpr(expr) => expr.eval(env, output),
+            Expr::CallExpr(expr) => expr.eval(env, output),
+        }
+    }
+}
+
 impl LiteralExpr {
     pub fn eval<T: Write>(
         &self,

@@ -1,10 +1,5 @@
-use super::environment::EnvironmentTree;
-use super::expr_interpret::Result;
 use super::literal::Literal;
 use super::token::Token;
-use std::fmt::Display;
-use std::io::Write;
-use std::rc::Rc;
 
 pub enum Expr {
     LiteralExpr(LiteralExpr),
@@ -54,36 +49,4 @@ pub struct CallExpr {
     pub callee: Box<Expr>,
     pub paren: Token,
     pub args: Vec<Box<Expr>>,
-}
-
-// TODO: probably should use the crate enum_dispatch
-impl Display for Expr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Expr::LiteralExpr(expr) => write!(f, "{}", expr),
-            Expr::BinaryExpr(expr) => write!(f, "{}", expr),
-            Expr::UnaryExpr(expr) => write!(f, "{}", expr),
-            Expr::GroupingExpr(expr) => write!(f, "{}", expr),
-            Expr::VarExpr(expr) => write!(f, "{}", expr),
-            Expr::AssignExpr(expr) => write!(f, "{}", expr),
-            Expr::LogicalExpr(expr) => write!(f, "{}", expr),
-            Expr::CallExpr(expr) => write!(f, "{}", expr),
-        }
-    }
-}
-
-// TODO: probably should use the crate enum_dispatch
-impl Expr {
-    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
-        match self {
-            Expr::LiteralExpr(expr) => expr.eval(env, output),
-            Expr::BinaryExpr(expr) => expr.eval(env, output),
-            Expr::UnaryExpr(expr) => expr.eval(env, output),
-            Expr::GroupingExpr(expr) => expr.eval(env, output),
-            Expr::VarExpr(expr) => expr.eval(env, output),
-            Expr::AssignExpr(expr) => expr.eval(env, output),
-            Expr::LogicalExpr(expr) => expr.eval(env, output),
-            Expr::CallExpr(expr) => expr.eval(env, output),
-        }
-    }
 }

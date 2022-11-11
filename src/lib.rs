@@ -5,6 +5,7 @@ mod expr_interpret;
 mod function;
 mod literal;
 mod parser;
+mod resolver;
 mod scanner;
 mod statement;
 mod stmt_display;

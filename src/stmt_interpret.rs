@@ -30,6 +30,21 @@ impl From<RuntimeError> for ExecError {
     }
 }
 
+impl Stmt {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+        match self {
+            Stmt::ExprStmt(s) => s.execute(env, output),
+            Stmt::PrintStmt(s) => s.execute(env, output),
+            Stmt::VarStmt(s) => s.execute(env, output),
+            Stmt::BlockStmt(s) => s.execute(env, output),
+            Stmt::IfStmt(s) => s.execute(env, output),
+            Stmt::WhileStmt(s) => s.execute(env, output),
+            Stmt::FunctionStmt(s) => s.execute(env, output),
+            Stmt::ReturnStmt(s) => s.execute(env, output),
+        }
+    }
+}
+
 impl PrintStmt {
     pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         let value = self.expr.eval(env, output)?;

@@ -2,6 +2,22 @@ use super::expr::*;
 use super::literal::Literal;
 use std::fmt::Display;
 
+// TODO: probably should use the crate enum_dispatch
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expr::LiteralExpr(expr) => write!(f, "{}", expr),
+            Expr::BinaryExpr(expr) => write!(f, "{}", expr),
+            Expr::UnaryExpr(expr) => write!(f, "{}", expr),
+            Expr::GroupingExpr(expr) => write!(f, "{}", expr),
+            Expr::VarExpr(expr) => write!(f, "{}", expr),
+            Expr::AssignExpr(expr) => write!(f, "{}", expr),
+            Expr::LogicalExpr(expr) => write!(f, "{}", expr),
+            Expr::CallExpr(expr) => write!(f, "{}", expr),
+        }
+    }
+}
+
 impl Display for LiteralExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.value {
