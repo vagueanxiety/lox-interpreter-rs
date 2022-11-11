@@ -1,8 +1,8 @@
-use super::environment::EnvironmentTree;
-use super::expr::*;
-use super::literal::Literal;
-use super::token::Token;
-use super::token::TokenType;
+use crate::environment::EnvironmentTree;
+use crate::expr::*;
+use crate::literal::Literal;
+use crate::token::Token;
+use crate::token::TokenType;
 use std::borrow::Borrow;
 use std::error::Error;
 use std::fmt;

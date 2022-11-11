@@ -1,5 +1,5 @@
-use super::function::LoxFunction;
-use super::function::NativeFunction;
+use crate::function::LoxFunction;
+use crate::function::NativeFunction;
 use std::fmt;
 
 #[derive(Clone, PartialEq)]

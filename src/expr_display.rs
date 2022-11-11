@@ -1,5 +1,5 @@
-use super::expr::*;
-use super::literal::Literal;
+use crate::expr::*;
+use crate::literal::Literal;
 use std::fmt::Display;
 
 // TODO: probably should use the crate enum_dispatch

@@ -1,5 +1,5 @@
-use super::literal::Literal;
-use super::token::Token;
+use crate::literal::Literal;
+use crate::token::Token;
 
 pub enum Expr {
     LiteralExpr(LiteralExpr),

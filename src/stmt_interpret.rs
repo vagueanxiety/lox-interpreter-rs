@@ -1,9 +1,9 @@
-use super::environment::Environment;
-use super::environment::EnvironmentTree;
-use super::expr_interpret::RuntimeError;
-use super::function::LoxFunction;
-use super::literal::Literal;
-use super::statement::*;
+use crate::environment::Environment;
+use crate::environment::EnvironmentTree;
+use crate::expr_interpret::RuntimeError;
+use crate::function::LoxFunction;
+use crate::literal::Literal;
+use crate::statement::*;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;

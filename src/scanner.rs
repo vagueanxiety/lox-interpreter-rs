@@ -1,6 +1,6 @@
-use super::literal::Literal;
-use super::token::Token;
-use super::token::TokenType;
+use crate::literal::Literal;
+use crate::token::Token;
+use crate::token::TokenType;
 use std::error::Error;
 use std::fmt;
 

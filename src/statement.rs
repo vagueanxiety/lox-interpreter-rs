@@ -1,5 +1,5 @@
-use super::expr::Expr;
-use super::token::Token;
+use crate::expr::Expr;
+use crate::token::Token;
 use std::rc::Rc;
 
 pub enum Stmt {

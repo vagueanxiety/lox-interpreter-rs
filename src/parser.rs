@@ -1,8 +1,8 @@
-use super::expr::*;
-use super::literal::Literal;
-use super::statement::*;
-use super::token::Token;
-use super::token::TokenType;
+use crate::expr::*;
+use crate::literal::Literal;
+use crate::statement::*;
+use crate::token::Token;
+use crate::token::TokenType;
 use std::error::Error;
 use std::fmt;
 use std::io;

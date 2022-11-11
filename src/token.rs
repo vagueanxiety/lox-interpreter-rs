@@ -1,4 +1,4 @@
-use super::literal::Literal;
+use crate::literal::Literal;
 use std::fmt;
 
 #[allow(non_camel_case_types)]
