@@ -98,19 +98,13 @@ impl FunctionStmt {
         env: &mut EnvironmentTree,
         _output: &mut T,
     ) -> Result<()> {
-        if let Some(cur_env) = env.keep_branch() {
-            let fun = LoxFunction::new(self.clone(), cur_env);
-            env.define(
-                self.name.lexeme.clone(),
-                Rc::new(Literal::FunctionLiteral(fun)),
-            );
-            Ok(())
-        } else {
-            Err(ExecError::RuntimeError(RuntimeError::new(
-                &self.name,
-                "Function definition has no surrounding environment",
-            )))
-        }
+        let cur_env = env.keep_branch();
+        let fun = LoxFunction::new(self.clone(), cur_env);
+        env.define(
+            self.name.lexeme.clone(),
+            Rc::new(Literal::FunctionLiteral(fun)),
+        );
+        Ok(())
     }
 }
 

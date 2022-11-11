@@ -18,17 +18,23 @@ struct EnvironmentNode {
 // - cur points to a valid node, or it is None
 pub struct EnvironmentTree {
     tree: Arena<EnvironmentNode>,
-    nid: Option<NodeId>,
+    global_nid: NodeId,
+    nid: NodeId,
 }
 
 impl EnvironmentTree {
     pub fn new() -> EnvironmentTree {
-        let mut et = EnvironmentTree {
-            tree: Arena::new(),
-            nid: None,
-        };
-        et.push(Environment::new());
-        et
+        let mut tree = Arena::new();
+        let global_nid = tree.new_node(EnvironmentNode {
+            map: Environment::new(),
+            keep_alive: true,
+        });
+
+        EnvironmentTree {
+            tree,
+            global_nid,
+            nid: global_nid,
+        }
     }
 
     pub fn push(&mut self, env: Environment) {
@@ -37,18 +43,19 @@ impl EnvironmentTree {
             keep_alive: false,
         };
         let child = self.tree.new_node(node);
-
-        if let Some(parent) = self.nid {
-            parent.append(child, &mut self.tree);
-        }
-        self.nid = Some(child);
+        self.nid.append(child, &mut self.tree);
+        self.nid = child;
     }
 
-    // conditionally pop based on keep_alive flags
+    // conditionally pop based on keep_alive flags and global_nid
     pub fn pop(&mut self) {
-        if let Some(nid) = self.nid {
+        if self.nid != self.global_nid {
+            // make a copy before changing self.nid
+            let nid = self.nid;
             let n = &self.tree[nid];
-            self.nid = n.parent();
+            self.nid = n
+                .parent()
+                .expect("Local EnvironmentNode must have a parent");
             if !n.get().keep_alive {
                 nid.remove_subtree(&mut self.tree)
             }
@@ -58,9 +65,8 @@ impl EnvironmentTree {
     // fn declaration
     // mark a certain branch as alive
     // recurse until it hits an marked node
-    pub fn keep_branch(&mut self) -> Option<NodeId> {
-        let nid = self.nid?;
-        let mut n = &mut self.tree[nid];
+    pub fn keep_branch(&mut self) -> NodeId {
+        let mut n = &mut self.tree[self.nid];
         loop {
             if n.get().keep_alive {
                 break;
@@ -74,7 +80,7 @@ impl EnvironmentTree {
                 break;
             }
         }
-        Some(nid)
+        self.nid
     }
 
     // fn call
@@ -82,22 +88,18 @@ impl EnvironmentTree {
     // - tree is not empty
     // - new_id is valid
     pub fn checkout(&mut self, new_nid: NodeId) -> NodeId {
-        let nid = self
-            .nid
-            .expect("Cannot checkout when EnvironmentTree is empty");
+        let nid = self.nid;
         self.tree.get(new_nid).expect("Invalid NodeId");
-        self.nid = Some(new_nid);
+        self.nid = new_nid;
         nid
     }
 
     // operations
     // TODO: resolver
     pub fn get(&mut self, name: &Token) -> Result<&Rc<Literal>> {
-        if let Some(nid) = self.nid {
-            if let Some(tid) = self.find(nid, &name.lexeme) {
-                if let Some(value) = self.tree[tid].get().map.get(&name.lexeme) {
-                    return Ok(value);
-                }
+        if let Some(tid) = self.find(self.nid, &name.lexeme) {
+            if let Some(value) = self.tree[tid].get().map.get(&name.lexeme) {
+                return Ok(value);
             }
         }
 
@@ -108,12 +110,10 @@ impl EnvironmentTree {
     }
 
     pub fn assign(&mut self, name: &Token, value: Rc<Literal>) -> Result<()> {
-        if let Some(nid) = self.nid {
-            if let Some(tid) = self.find(nid, &name.lexeme) {
-                if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(&name.lexeme) {
-                    *value_ref = value;
-                    return Ok(());
-                }
+        if let Some(tid) = self.find(self.nid, &name.lexeme) {
+            if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(&name.lexeme) {
+                *value_ref = value;
+                return Ok(());
             }
         }
 
@@ -126,10 +126,7 @@ impl EnvironmentTree {
     // pre-conditions:
     // - tree is not empty
     pub fn define(&mut self, name: String, value: Rc<Literal>) {
-        let nid = self
-            .nid
-            .expect("Cannot define variables in an empty EnvironmentTree");
-        self.tree[nid].get_mut().map.insert(name, value);
+        self.tree[self.nid].get_mut().map.insert(name, value);
     }
 
     fn find(&mut self, id: NodeId, name: &str) -> Option<NodeId> {
