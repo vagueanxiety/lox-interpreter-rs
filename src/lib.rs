@@ -26,6 +26,8 @@ use std::rc::Rc;
 use std::{error::Error, io::Write};
 use stmt_interpret::ExecError;
 
+pub use function::LOX_ASCII;
+
 pub struct Interpreter {
     env: EnvironmentTree,
 }

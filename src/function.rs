@@ -123,7 +123,7 @@ pub fn clock(_args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
     }
 }
 
-static LOX_ASCII: &str = r"
+pub static LOX_ASCII: &str = r"
    ,--,                                
 ,---.'|       ,----..                  
 |   | :      /   /   \  ,--,     ,--,  

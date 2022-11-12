@@ -1,4 +1,6 @@
 use lox_interpreter_rs::Interpreter;
+use lox_interpreter_rs::LOX_ASCII;
+
 use std::env;
 use std::fs;
 use std::io;
@@ -16,10 +18,10 @@ fn main() {
 }
 
 pub fn run_prompt() {
-    println!("Entering REPL...");
+    println!("{LOX_ASCII}");
     let mut interpreter = Interpreter::new();
     loop {
-        print!("> ");
+        print!(">> ");
         io::stdout().flush().unwrap();
         let mut line = String::new();
         io::stdin()
