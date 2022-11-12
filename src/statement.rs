@@ -1,5 +1,6 @@
 use crate::expr::Expr;
 use crate::token::Token;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub enum Stmt {
@@ -9,7 +10,7 @@ pub enum Stmt {
     BlockStmt(BlockStmt),
     IfStmt(IfStmt),
     WhileStmt(WhileStmt),
-    FunctionStmt(Rc<FunctionStmt>),
+    FunctionStmt(Rc<RefCell<FunctionStmt>>),
     ReturnStmt(ReturnStmt),
 }
 

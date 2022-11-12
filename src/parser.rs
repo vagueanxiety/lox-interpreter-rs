@@ -3,6 +3,7 @@ use crate::literal::Literal;
 use crate::statement::*;
 use crate::token::Token;
 use crate::token::TokenType;
+use std::cell::RefCell;
 use std::error::Error;
 use std::fmt;
 use std::io;
@@ -167,11 +168,11 @@ impl Parser {
         }
         self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after body.")?;
 
-        Ok(Stmt::FunctionStmt(Rc::new(FunctionStmt {
+        Ok(Stmt::FunctionStmt(Rc::new(RefCell::new(FunctionStmt {
             name,
             params,
             body,
-        })))
+        }))))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt> {
@@ -333,6 +334,7 @@ impl Parser {
                     return Ok(Box::new(Expr::AssignExpr(AssignExpr {
                         name: e.name,
                         value,
+                        scope_offset: None,
                     })));
                 }
                 _ => {
@@ -509,7 +511,10 @@ impl Parser {
 
         // variables
         if let Some(token) = self.match_one(TokenType::IDENTIFIER) {
-            return Ok(Box::new(Expr::VarExpr(VarExpr { name: token })));
+            return Ok(Box::new(Expr::VarExpr(VarExpr {
+                name: token,
+                scope_offset: None,
+            })));
         }
 
         // grouping

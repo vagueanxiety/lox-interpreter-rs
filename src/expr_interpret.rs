@@ -187,14 +187,14 @@ impl VarExpr {
         env: &mut EnvironmentTree,
         _output: &mut T,
     ) -> Result<Rc<Literal>> {
-        Ok(env.get(&self.name)?.clone())
+        Ok(env.get(&self.name, self.scope_offset)?.clone())
     }
 }
 
 impl AssignExpr {
     pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
         let value = self.value.eval(env, output)?;
-        env.assign(&self.name, value.clone())?;
+        env.assign(&self.name, value.clone(), self.scope_offset)?;
         Ok(value)
     }
 }

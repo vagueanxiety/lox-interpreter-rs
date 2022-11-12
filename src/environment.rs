@@ -94,13 +94,14 @@ impl EnvironmentTree {
         nid
     }
 
-    // operations
-    // TODO: resolver
-    pub fn get(&mut self, name: &Token) -> Result<&Rc<Literal>> {
-        if let Some(tid) = self.find(self.nid, &name.lexeme) {
-            if let Some(value) = self.tree[tid].get().map.get(&name.lexeme) {
+    pub fn get(&self, name: &Token, distance: Option<usize>) -> Result<&Rc<Literal>> {
+        if let Some(d) = distance {
+            if let Some(value) = self.get_value_at(self.nid, d, &name.lexeme) {
                 return Ok(value);
             }
+        } else if let Some(value) = self.get_value_at(self.global_nid, 0, &name.lexeme) {
+            // var is assumed in the global if distance is None
+            return Ok(value);
         }
 
         Err(RuntimeError::new(
@@ -109,12 +110,21 @@ impl EnvironmentTree {
         ))
     }
 
-    pub fn assign(&mut self, name: &Token, value: Rc<Literal>) -> Result<()> {
-        if let Some(tid) = self.find(self.nid, &name.lexeme) {
-            if let Some(value_ref) = self.tree[tid].get_mut().map.get_mut(&name.lexeme) {
+    pub fn assign(
+        &mut self,
+        name: &Token,
+        value: Rc<Literal>,
+        distance: Option<usize>,
+    ) -> Result<()> {
+        if let Some(d) = distance {
+            if let Some(value_ref) = self.get_value_ref_at(self.nid, d, &name.lexeme) {
                 *value_ref = value;
                 return Ok(());
             }
+        } else if let Some(value_ref) = self.get_value_ref_at(self.global_nid, 0, &name.lexeme) {
+            // var is assumed in the global if distance is None
+            *value_ref = value;
+            return Ok(());
         }
 
         Err(RuntimeError::new(
@@ -123,14 +133,22 @@ impl EnvironmentTree {
         ))
     }
 
-    // pre-conditions:
-    // - tree is not empty
     pub fn define(&mut self, name: String, value: Rc<Literal>) {
         self.tree[self.nid].get_mut().map.insert(name, value);
     }
 
-    fn find(&mut self, id: NodeId, name: &str) -> Option<NodeId> {
-        id.ancestors(&self.tree)
-            .find(|&aid| self.tree[aid].get().map.contains_key(name))
+    fn get_value_at(&self, nid: NodeId, offset: usize, key: &str) -> Option<&Rc<Literal>> {
+        let tid = nid.ancestors(&self.tree).nth(offset)?;
+        self.tree[tid].get().map.get(key)
+    }
+
+    fn get_value_ref_at(
+        &mut self,
+        nid: NodeId,
+        offset: usize,
+        key: &str,
+    ) -> Option<&mut Rc<Literal>> {
+        let tid = nid.ancestors(&self.tree).nth(offset)?;
+        self.tree[tid].get_mut().map.get_mut(key)
     }
 }

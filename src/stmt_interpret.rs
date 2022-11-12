@@ -4,6 +4,7 @@ use crate::expr_interpret::RuntimeError;
 use crate::function::LoxFunction;
 use crate::literal::Literal;
 use crate::statement::*;
+use std::cell::RefCell;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
@@ -13,8 +14,6 @@ pub enum ExecError {
     RuntimeError(RuntimeError),
     Return(Rc<Literal>),
 }
-
-pub type Result<T> = std::result::Result<T, ExecError>;
 
 impl From<io::Error> for ExecError {
     fn from(error: io::Error) -> Self {
@@ -30,6 +29,8 @@ impl From<RuntimeError> for ExecError {
     }
 }
 
+pub type Result<T> = std::result::Result<T, ExecError>;
+
 impl Stmt {
     pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         match self {
@@ -39,8 +40,8 @@ impl Stmt {
             Stmt::BlockStmt(s) => s.execute(env, output),
             Stmt::IfStmt(s) => s.execute(env, output),
             Stmt::WhileStmt(s) => s.execute(env, output),
-            Stmt::FunctionStmt(s) => s.execute(env, output),
             Stmt::ReturnStmt(s) => s.execute(env, output),
+            Stmt::FunctionStmt(s) => FunctionStmt::execute(s, env, output),
         }
     }
 }
@@ -107,16 +108,19 @@ impl WhileStmt {
     }
 }
 
+// TODO: would be nice if we can do Rc<RefCell<Self>>
+// in general FunctionStmt is a special case that I should think about
+// gettting rid of, while not losing much of its benefits if possible
 impl FunctionStmt {
     pub fn execute<T: Write>(
-        self: &Rc<Self>,
+        self_: &Rc<RefCell<FunctionStmt>>,
         env: &mut EnvironmentTree,
         _output: &mut T,
     ) -> Result<()> {
         let cur_env = env.keep_branch();
-        let fun = LoxFunction::new(self.clone(), cur_env);
+        let fun = LoxFunction::new(self_.clone(), cur_env);
         env.define(
-            self.name.lexeme.clone(),
+            self_.borrow().name.lexeme.clone(),
             Rc::new(Literal::FunctionLiteral(fun)),
         );
         Ok(())

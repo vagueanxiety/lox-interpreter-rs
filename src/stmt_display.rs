@@ -11,8 +11,8 @@ impl Display for Stmt {
             Stmt::BlockStmt(s) => write!(f, "{}", s),
             Stmt::IfStmt(s) => write!(f, "{}", s),
             Stmt::WhileStmt(s) => write!(f, "{}", s),
-            Stmt::FunctionStmt(s) => write!(f, "{}", s),
             Stmt::ReturnStmt(s) => write!(f, "{}", s),
+            Stmt::FunctionStmt(s) => write!(f, "{}", s.borrow()),
         }
     }
 }

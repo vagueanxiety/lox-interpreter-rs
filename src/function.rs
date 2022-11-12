@@ -1,12 +1,12 @@
-use crate::expr_interpret::RuntimeError;
-
 use crate::environment::Environment;
 use crate::environment::EnvironmentTree;
 use crate::expr_interpret::Result;
+use crate::expr_interpret::RuntimeError;
 use crate::literal::Literal;
 use crate::statement::FunctionStmt;
 use crate::stmt_interpret::ExecError;
 use indextree::NodeId;
+use std::cell::RefCell;
 use std::fmt::Display;
 use std::io::Write;
 use std::rc::Rc;
@@ -14,7 +14,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Clone)]
 pub struct LoxFunction {
-    declaration: Rc<FunctionStmt>,
+    declaration: Rc<RefCell<FunctionStmt>>,
     closure: NodeId,
 }
 
@@ -26,12 +26,12 @@ impl PartialEq for LoxFunction {
 
 impl Display for LoxFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.declaration)
+        write!(f, "{}", self.declaration.borrow())
     }
 }
 
 impl LoxFunction {
-    pub fn new(declaration: Rc<FunctionStmt>, closure: NodeId) -> Self {
+    pub fn new(declaration: Rc<RefCell<FunctionStmt>>, closure: NodeId) -> Self {
         LoxFunction {
             declaration,
             closure,
@@ -47,12 +47,12 @@ impl LoxFunction {
         let prev = env.checkout(self.closure);
 
         env.push(Environment::new());
-        for (i, p) in self.declaration.params.iter().enumerate() {
+        for (i, p) in self.declaration.borrow().params.iter().enumerate() {
             env.define(p.lexeme.clone(), args[i].clone());
         }
 
         let mut return_value = Rc::new(Literal::Empty);
-        for s in self.declaration.body.iter() {
+        for s in self.declaration.borrow().body.iter() {
             match s.execute(env, output) {
                 Ok(_) => {}
                 Err(ExecError::Return(value)) => {
@@ -71,7 +71,7 @@ impl LoxFunction {
     }
 
     pub fn arity(&self) -> usize {
-        self.declaration.params.len()
+        self.declaration.borrow().params.len()
     }
 }
 

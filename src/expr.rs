@@ -32,11 +32,13 @@ pub struct GroupingExpr {
 
 pub struct VarExpr {
     pub name: Token,
+    pub scope_offset: Option<usize>,
 }
 
 pub struct AssignExpr {
     pub name: Token,
     pub value: Box<Expr>,
+    pub scope_offset: Option<usize>,
 }
 
 pub struct LogicalExpr {
