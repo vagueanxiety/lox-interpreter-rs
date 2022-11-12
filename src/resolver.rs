@@ -1,17 +1,27 @@
-use crate::expr_resolve::Result;
+use crate::expr_resolve::{ResolutionError, Result};
 use crate::statement::Stmt;
 use crate::token::Token;
 use std::collections::HashMap;
 
 type Scope = HashMap<String, bool>;
 
+#[derive(PartialEq)]
+pub enum FunctionType {
+    NonFun,
+    Fun,
+}
+
 pub struct Resolver {
     scopes: Vec<Scope>,
+    pub current_fun: FunctionType,
 }
 
 impl Resolver {
     pub fn new() -> Self {
-        Resolver { scopes: vec![] }
+        Resolver {
+            scopes: vec![],
+            current_fun: FunctionType::NonFun,
+        }
     }
 
     pub fn begin_scope(&mut self) {
@@ -22,10 +32,17 @@ impl Resolver {
         self.scopes.pop();
     }
 
-    pub fn declare(&mut self, name: &Token) {
+    pub fn declare(&mut self, name: &Token) -> Result<()> {
         if let Some(s) = self.peek() {
+            if s.contains_key(&name.lexeme) {
+                return Err(ResolutionError::new(
+                    name,
+                    "Already a variable with this name in this scope.",
+                ));
+            }
             s.insert(name.lexeme.clone(), false);
         }
+        Ok(())
     }
 
     pub fn define(&mut self, name: &Token) {

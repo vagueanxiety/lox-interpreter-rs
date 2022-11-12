@@ -14,7 +14,6 @@ impl fmt::Display for ResolutionError {
 }
 
 impl ResolutionError {
-    // TODO: more specialized constructor for variable resolution error?
     pub fn new(t: &Token, msg: &str) -> ResolutionError {
         let full_msg = format!("[line {}] {}", t.line, msg);
         ResolutionError { msg: full_msg }
