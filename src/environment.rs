@@ -95,12 +95,7 @@ impl EnvironmentTree {
     }
 
     pub fn get(&self, name: &Token, distance: Option<usize>) -> Result<&Rc<Literal>> {
-        if let Some(d) = distance {
-            if let Some(value) = self.get_value_at(self.nid, d, &name.lexeme) {
-                return Ok(value);
-            }
-        } else if let Some(value) = self.get_value_at(self.global_nid, 0, &name.lexeme) {
-            // var is assumed in the global if distance is None
+        if let Some(value) = self.get_at(&name.lexeme, distance) {
             return Ok(value);
         }
 
@@ -108,6 +103,20 @@ impl EnvironmentTree {
             name,
             &format!("Undefined variable '{}'", name.lexeme),
         ))
+    }
+
+    // this method should be used *publicly* only by class initializer
+    pub fn get_at(&self, name: &str, distance: Option<usize>) -> Option<&Rc<Literal>> {
+        if let Some(d) = distance {
+            if let Some(value) = self.get_value_at(self.nid, d, name) {
+                return Some(value);
+            }
+        } else if let Some(value) = self.get_value_at(self.global_nid, 0, name) {
+            // var is assumed in the global if distance is None
+            return Some(value);
+        }
+
+        None
     }
 
     pub fn assign(

@@ -25,16 +25,28 @@ impl LoxClass {
 
     pub fn call<T: Write>(
         self: &Rc<Self>,
-        _args: Vec<Rc<Literal>>,
-        _env: &mut EnvironmentTree,
-        _output: &mut T,
+        args: Vec<Rc<Literal>>,
+        env: &mut EnvironmentTree,
+        output: &mut T,
     ) -> Result<Rc<Literal>> {
         // should be fine to clone lox class
-        let instance = LoxInstance::new(self.clone());
-        Ok(Rc::new(Literal::InstanceLiteral(RefCell::new(instance))))
+        let instance = Rc::new(Literal::InstanceLiteral(RefCell::new(LoxInstance::new(
+            self.clone(),
+        ))));
+
+        if let Some(i) = self.methods.get("init") {
+            let initializer = i.bind(env, instance.clone());
+            initializer.call(args, env, output)?;
+        }
+
+        Ok(instance)
     }
 
     pub fn arity(&self) -> usize {
-        0
+        if let Some(i) = self.methods.get("init") {
+            i.arity()
+        } else {
+            0
+        }
     }
 }

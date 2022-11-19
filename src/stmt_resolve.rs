@@ -103,6 +103,12 @@ impl ReturnStmt {
         }
 
         if let Some(ref mut value) = self.value {
+            if resolver.current_fun == FunctionType::Initializer {
+                return Err(ResolutionError::new(
+                    &self.keyword,
+                    "Can't return a value from an initializer.",
+                ));
+            }
             value.resolve(resolver)?;
         }
         Ok(())
@@ -132,7 +138,12 @@ impl ClassStmt {
             .insert("this".to_string(), true);
 
         for fs in &self.methods {
-            fs.borrow_mut().resolve_fn(resolver, FunctionType::Method)?;
+            let fun_type = if fs.borrow().name.lexeme == "init" {
+                FunctionType::Initializer
+            } else {
+                FunctionType::Method
+            };
+            fs.borrow_mut().resolve_fn(resolver, fun_type)?;
         }
 
         resolver.end_scope();

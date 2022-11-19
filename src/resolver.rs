@@ -10,6 +10,7 @@ pub enum FunctionType {
     NonFun,
     Fun,
     Method,
+    Initializer,
 }
 
 #[derive(PartialEq)]
@@ -88,6 +89,7 @@ impl Resolver {
     }
 
     // theoretically we should have a &self equivalent
+    // this method should be used *publicly* only by ClassStmt to define 'this'
     pub fn peek(&mut self) -> Option<&mut Scope> {
         if self.scopes.is_empty() {
             None

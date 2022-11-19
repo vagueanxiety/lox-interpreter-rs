@@ -14,6 +14,7 @@ use std::rc::Rc;
 pub struct LoxFunction {
     declaration: Rc<RefCell<FunctionStmt>>,
     closure: NodeId,
+    is_initializer: bool,
 }
 
 impl PartialEq for LoxFunction {
@@ -29,10 +30,15 @@ impl Display for LoxFunction {
 }
 
 impl LoxFunction {
-    pub fn new(declaration: Rc<RefCell<FunctionStmt>>, closure: NodeId) -> Self {
+    pub fn new(
+        declaration: Rc<RefCell<FunctionStmt>>,
+        closure: NodeId,
+        is_initializer: bool,
+    ) -> Self {
         LoxFunction {
             declaration,
             closure,
+            is_initializer,
         }
     }
 
@@ -43,18 +49,26 @@ impl LoxFunction {
         output: &mut T,
     ) -> Result<Rc<Literal>> {
         let prev = env.checkout(self.closure);
+        let mut return_value = Rc::new(Literal::Empty);
+        if self.is_initializer {
+            return_value = env
+                .get_at("this", Some(0))
+                .expect("Missing instance")
+                .clone()
+        }
 
         env.push(Environment::new());
         for (i, p) in self.declaration.borrow().params.iter().enumerate() {
             env.define(p.lexeme.clone(), args[i].clone());
         }
 
-        let mut return_value = Rc::new(Literal::Empty);
         for s in self.declaration.borrow().body.iter() {
             match s.execute(env, output) {
                 Ok(_) => {}
                 Err(ExecError::Return(value)) => {
-                    return_value = value;
+                    if !self.is_initializer {
+                        return_value = value;
+                    }
                     break;
                 }
                 Err(ExecError::RuntimeError(error)) => {
@@ -78,6 +92,6 @@ impl LoxFunction {
         env.define("this".to_string(), instance);
         let cur = env.keep_branch();
         env.checkout(prev);
-        LoxFunction::new(self.declaration.clone(), cur)
+        LoxFunction::new(self.declaration.clone(), cur, self.is_initializer)
     }
 }

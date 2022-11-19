@@ -121,7 +121,7 @@ impl FunctionStmt {
         _output: &mut T,
     ) -> Result<()> {
         let cur_env = env.keep_branch();
-        let fun = LoxFunction::new(self_.clone(), cur_env);
+        let fun = LoxFunction::new(self_.clone(), cur_env, false);
         env.define(
             self_.borrow().name.lexeme.clone(),
             Rc::new(Literal::FunctionLiteral(fun)),
@@ -148,7 +148,7 @@ impl ClassStmt {
         let cur_env = env.keep_branch();
         let mut methods = HashMap::new();
         for fs in &self.methods {
-            let method = LoxFunction::new(fs.clone(), cur_env);
+            let method = LoxFunction::new(fs.clone(), cur_env, fs.borrow().name.lexeme == "init");
             methods.insert(fs.borrow().name.lexeme.clone(), method);
         }
 
