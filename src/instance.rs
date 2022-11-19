@@ -7,9 +7,9 @@ use std::{fmt::Display, rc::Rc};
 
 // Note that currently nothing stops you from putting an instance into
 // itself, even though it will create a reference cycle of Rc<Literal>.
-// As a result, they never get deallocated. We *might* be able to prevent it
-// by doing some static analysis during variable resolution (but how do we handle
-// a loop with more than two Rc<Literal>?)
+// We *might* be able to prevent it by doing some static analysis
+// during variable resolution (but how do we handle a loop with
+// more than two Rc<Literal>?)
 #[derive(PartialEq)]
 pub struct LoxInstance {
     class: Rc<LoxClass>,
@@ -41,7 +41,7 @@ impl LoxInstance {
         if let Some(f) = self.fields.get(&name.lexeme) {
             Ok(f.clone())
         } else if let Some(bm) = self.bound_methods.get(&name.lexeme) {
-            // method is already bound and so reuse it
+            // method is already bound so reuse it
             Ok(bm.clone())
         } else if let Some(m) = self.class.methods.get(&name.lexeme) {
             let bound_method = Rc::new(Literal::FunctionLiteral(m.bind(env, instance)));

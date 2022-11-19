@@ -29,7 +29,6 @@ impl LoxClass {
         env: &mut EnvironmentTree,
         output: &mut T,
     ) -> Result<Rc<Literal>> {
-        // should be fine to clone lox class
         let instance = Rc::new(Literal::InstanceLiteral(RefCell::new(LoxInstance::new(
             self.clone(),
         ))));

@@ -14,8 +14,6 @@ struct EnvironmentNode {
     keep_alive: bool,
 }
 
-// invariants:
-// - cur points to a valid node, or it is None
 pub struct EnvironmentTree {
     tree: Arena<EnvironmentNode>,
     global_nid: NodeId,
@@ -85,7 +83,6 @@ impl EnvironmentTree {
 
     // fn call
     // pre-conditions:
-    // - tree is not empty
     // - new_id is valid
     pub fn checkout(&mut self, new_nid: NodeId) -> NodeId {
         let nid = self.nid;

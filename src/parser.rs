@@ -110,8 +110,8 @@ impl Parser {
             match self.declaration() {
                 Ok(s) => statements.push(s),
                 // parser now synchronizes after *all* parsing errors
-                // there could be errors after which parser just aborts
-                // and propogates them up the call chain
+                // alternatively, parser can just abort and propogates
+                // them up the call chain
                 Err(e) => {
                     // still prints the error for now
                     write!(error_output, "{e}\n")?;

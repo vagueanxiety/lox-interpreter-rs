@@ -10,6 +10,8 @@ use std::rc::Rc;
 // LoxClass is in Rc because it can be owned by mutiple instances
 // LoxInstance is in RefCell because it needs to support
 // mutation of its fields through Rc<Literal>
+//
+// This type should probably be 'LoxType' instead since it is not just literals
 #[derive(PartialEq)]
 pub enum Literal {
     // primitive
