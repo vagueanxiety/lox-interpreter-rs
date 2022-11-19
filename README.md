@@ -2,6 +2,8 @@
 Yet another [Lox](https://craftinginterpreters.com/the-lox-language.html) interpreter.
 
 ```
+>> print lox();
+
    ,--,                                
 ,---.'|       ,----..                  
 |   | :      /   /   \  ,--,     ,--,  
@@ -21,7 +23,7 @@ Yet another [Lox](https://craftinginterpreters.com/the-lox-language.html) interp
 >> print 1+1;
 2
 >> print clock();
-1668897738.3461406
+1668899599.0131063
 >> 
 ```
 
