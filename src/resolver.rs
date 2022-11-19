@@ -9,6 +9,7 @@ type Scope = HashMap<String, bool>;
 pub enum FunctionType {
     NonFun,
     Fun,
+    Method,
 }
 
 pub struct Resolver {
@@ -57,7 +58,7 @@ impl Resolver {
     }
 
     // theoretically we should have a &self equivalent
-    fn peek(&mut self) -> Option<&mut Scope> {
+    pub fn peek(&mut self) -> Option<&mut Scope> {
         if self.scopes.is_empty() {
             None
         } else {

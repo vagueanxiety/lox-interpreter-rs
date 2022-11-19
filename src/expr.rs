@@ -10,6 +10,9 @@ pub enum Expr {
     AssignExpr(AssignExpr),
     LogicalExpr(LogicalExpr),
     CallExpr(CallExpr),
+    GetExpr(GetExpr),
+    SetExpr(SetExpr),
+    ThisExpr(ThisExpr),
 }
 
 pub struct LiteralExpr {
@@ -51,4 +54,20 @@ pub struct CallExpr {
     pub callee: Box<Expr>,
     pub paren: Token,
     pub args: Vec<Box<Expr>>,
+}
+
+pub struct GetExpr {
+    pub object: Box<Expr>,
+    pub name: Token,
+}
+
+pub struct SetExpr {
+    pub object: Box<Expr>,
+    pub name: Token,
+    pub value: Box<Expr>,
+}
+
+pub struct ThisExpr {
+    pub keyword: Token,
+    pub scope_offset: Option<usize>,
 }

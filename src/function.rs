@@ -1,7 +1,6 @@
 use crate::environment::Environment;
 use crate::environment::EnvironmentTree;
 use crate::expr_interpret::Result;
-use crate::expr_interpret::RuntimeError;
 use crate::literal::Literal;
 use crate::statement::FunctionStmt;
 use crate::stmt_interpret::ExecError;
@@ -10,9 +9,8 @@ use std::cell::RefCell;
 use std::fmt::Display;
 use std::io::Write;
 use std::rc::Rc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Clone)]
+// TODO: not sure if a Callable trait would be beneficial?
 pub struct LoxFunction {
     declaration: Rc<RefCell<FunctionStmt>>,
     closure: NodeId,
@@ -73,74 +71,13 @@ impl LoxFunction {
     pub fn arity(&self) -> usize {
         self.declaration.borrow().params.len()
     }
-}
 
-#[derive(Clone, PartialEq)]
-pub struct NativeFunction {
-    name: &'static str,
-    arity: usize,
-    fun: fn(Vec<Rc<Literal>>) -> Result<Rc<Literal>>,
-}
-
-impl Display for NativeFunction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name)
+    pub fn bind(&self, env: &mut EnvironmentTree, instance: Rc<Literal>) -> Self {
+        let prev = env.checkout(self.closure);
+        env.push(Environment::new());
+        env.define("this".to_string(), instance);
+        let cur = env.keep_branch();
+        env.checkout(prev);
+        LoxFunction::new(self.declaration.clone(), cur)
     }
-}
-
-impl NativeFunction {
-    pub fn new(
-        name: &'static str,
-        arity: usize,
-        fun: fn(Vec<Rc<Literal>>) -> Result<Rc<Literal>>,
-    ) -> Self {
-        NativeFunction { name, arity, fun }
-    }
-
-    pub fn call(&self, args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
-        (self.fun)(args).or_else(|error| {
-            Err(RuntimeError {
-                msg: format!("[@{}] {}", self.name, error.msg),
-            })
-        })
-    }
-
-    pub fn arity(&self) -> usize {
-        self.arity
-    }
-}
-
-// example native function
-pub fn clock(_args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
-    let start = SystemTime::now();
-    if let Ok(since_the_epoch) = start.duration_since(UNIX_EPOCH) {
-        let secs = since_the_epoch.as_secs_f64();
-        Ok(Rc::new(Literal::NumberLiteral(secs)))
-    } else {
-        Err(RuntimeError {
-            msg: format!("Time went backwards!"),
-        })
-    }
-}
-
-pub static LOX_ASCII: &str = r"
-   ,--,                                
-,---.'|       ,----..                  
-|   | :      /   /   \  ,--,     ,--,  
-:   : |     /   .     : |'. \   / .`|  
-|   ' :    .   /   ;.  \; \ `\ /' / ;  
-;   ; '   .   ;   /  ` ;`. \  /  / .'  
-'   | |__ ;   |  ; \ ; | \  \/  / ./   
-|   | :.'||   :  | ; | '  \  \.'  /    
-'   :    ;.   |  ' ' ' :   \  ;  ;     
-|   |  ./ '   ;  \; /  |  / \  \  \    
-;   : ;    \   \  ',  /  ;  /\  \  \   
-|   ,/      ;   :    / ./__;  \  ;  \  
-'---'        \   \ .'  |   : / \  \  ; 
-              `---`    ;   |/   \  ' | 
-                       `---'     `--`  
-";
-
-pub fn lox(_args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
-    Ok(Rc::new(Literal::StringLiteral(LOX_ASCII.to_string())))
 }

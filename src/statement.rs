@@ -3,6 +3,11 @@ use crate::token::Token;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+// Note:
+// FunctionStmt is in Rc because it can be owned by Stmt
+// and LoxFunction. It is in RefCell because Resolver needs to
+// mutate exprs within FunctionStmt to save scope_offset. And the
+// mutation is safe because only Resolver borrows it mutably and exclusively.
 pub enum Stmt {
     ExprStmt(ExprStmt),
     PrintStmt(PrintStmt),
@@ -12,6 +17,7 @@ pub enum Stmt {
     WhileStmt(WhileStmt),
     FunctionStmt(Rc<RefCell<FunctionStmt>>),
     ReturnStmt(ReturnStmt),
+    ClassStmt(ClassStmt),
 }
 
 pub struct ExprStmt {
@@ -51,4 +57,9 @@ pub struct FunctionStmt {
 pub struct ReturnStmt {
     pub keyword: Token,
     pub value: Option<Box<Expr>>,
+}
+
+pub struct ClassStmt {
+    pub name: Token,
+    pub methods: Vec<Rc<RefCell<FunctionStmt>>>,
 }

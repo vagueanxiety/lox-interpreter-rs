@@ -1,24 +1,31 @@
 mod environment;
+
+mod class;
+mod function;
+mod instance;
+mod literal;
+mod native_function;
+mod token;
+
+mod parser;
+mod resolver;
+mod scanner;
+
 mod expr;
 mod expr_display;
 mod expr_interpret;
 mod expr_resolve;
-mod function;
-mod literal;
-mod parser;
-mod resolver;
-mod scanner;
+
 mod statement;
 mod stmt_display;
 mod stmt_interpret;
 mod stmt_resolve;
-mod token;
 
 use environment::EnvironmentTree;
-use function::clock;
-use function::lox;
-use function::NativeFunction;
 use literal::Literal;
+use native_function::clock;
+use native_function::lox;
+use native_function::NativeFunction;
 use parser::Parser;
 use resolver::Resolver;
 use scanner::Scanner;
@@ -26,7 +33,7 @@ use std::rc::Rc;
 use std::{error::Error, io::Write};
 use stmt_interpret::ExecError;
 
-pub use function::LOX_ASCII;
+pub use native_function::LOX_ASCII;
 
 pub struct Interpreter {
     env: EnvironmentTree,

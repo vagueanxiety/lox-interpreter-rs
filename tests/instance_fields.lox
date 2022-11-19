@@ -1,0 +1,5 @@
+class foo {}
+var a = foo();
+a.bar = "bar";
+print a.bar;
+print a.boo;

@@ -13,6 +13,7 @@ impl Display for Stmt {
             Stmt::WhileStmt(s) => write!(f, "{}", s),
             Stmt::ReturnStmt(s) => write!(f, "{}", s),
             Stmt::FunctionStmt(s) => write!(f, "{}", s.borrow()),
+            Stmt::ClassStmt(s) => write!(f, "{}", s),
         }
     }
 }
@@ -96,5 +97,19 @@ impl Display for ReturnStmt {
             Some(ref value) => write!(f, "(return {})", value),
             None => write!(f, "(return nil)"),
         }
+    }
+}
+
+impl Display for ClassStmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut method_string = String::new();
+        for m in &self.methods {
+            method_string = format!("{}{}\n", method_string, m.borrow());
+        }
+        write!(
+            f,
+            "(class-start {}\n{}class-end)",
+            self.name.lexeme, method_string
+        )
     }
 }

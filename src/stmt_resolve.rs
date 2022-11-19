@@ -15,12 +15,13 @@ impl Stmt {
             Stmt::WhileStmt(s) => s.resolve(resolver),
             Stmt::ReturnStmt(s) => s.resolve(resolver),
             Stmt::FunctionStmt(s) => s.borrow_mut().resolve(resolver),
+            Stmt::ClassStmt(s) => s.resolve(resolver),
         }
     }
 }
 
 impl BlockStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.begin_scope();
         for s in self.statements.iter_mut() {
             s.resolve(resolver)?
@@ -31,7 +32,7 @@ impl BlockStmt {
 }
 
 impl VarStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.declare(&self.name)?;
         if let Some(ref mut initializer) = self.value {
             initializer.resolve(resolver)?;
@@ -42,7 +43,7 @@ impl VarStmt {
 }
 
 impl FunctionStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.declare(&self.name)?;
         resolver.define(&self.name);
         self.resolve_fn(resolver, FunctionType::Fun)
@@ -68,13 +69,13 @@ impl FunctionStmt {
 }
 
 impl ExprStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.expr.resolve(resolver)
     }
 }
 
 impl IfStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.condition.resolve(resolver)?;
         self.then_branch.resolve(resolver)?;
         if let Some(ref mut else_branch) = self.else_branch {
@@ -85,13 +86,13 @@ impl IfStmt {
 }
 
 impl PrintStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.expr.resolve(resolver)
     }
 }
 
 impl ReturnStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         if resolver.current_fun == FunctionType::NonFun {
             return Err(ResolutionError::new(
                 &self.keyword,
@@ -107,9 +108,29 @@ impl ReturnStmt {
 }
 
 impl WhileStmt {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.condition.resolve(resolver)?;
         self.body.resolve(resolver)?;
+        Ok(())
+    }
+}
+
+impl ClassStmt {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        resolver.declare(&self.name)?;
+        resolver.define(&self.name);
+
+        resolver.begin_scope();
+        resolver
+            .peek()
+            .expect("Empty scopes")
+            .insert("this".to_string(), true);
+
+        for fs in &self.methods {
+            fs.borrow_mut().resolve_fn(resolver, FunctionType::Method)?;
+        }
+
+        resolver.end_scope();
         Ok(())
     }
 }

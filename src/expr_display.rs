@@ -14,10 +14,14 @@ impl Display for Expr {
             Expr::AssignExpr(expr) => write!(f, "{}", expr),
             Expr::LogicalExpr(expr) => write!(f, "{}", expr),
             Expr::CallExpr(expr) => write!(f, "{}", expr),
+            Expr::GetExpr(expr) => write!(f, "{}", expr),
+            Expr::SetExpr(expr) => write!(f, "{}", expr),
+            Expr::ThisExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
 
+// TODO: macro to reduce boilder plate?
 impl Display for LiteralExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.value {
@@ -27,6 +31,8 @@ impl Display for LiteralExpr {
             Literal::BoolLiteral(_) => write!(f, "(bool {})", self.value),
             Literal::FunctionLiteral(_) => write!(f, "(function {})", self.value),
             Literal::NativeFunctionLiteral(_) => write!(f, "(native-function {})", self.value),
+            Literal::ClassLiteral(_) => write!(f, "(class {})", self.value),
+            Literal::InstanceLiteral(_) => write!(f, "(instance {})", self.value),
         }
     }
 }
@@ -76,5 +82,27 @@ impl Display for CallExpr {
         let arg_string = arg_string.trim_end();
 
         write!(f, "(call {} ({}))", self.callee, arg_string)
+    }
+}
+
+impl Display for GetExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(get-property {} {})", self.object, self.name.lexeme)
+    }
+}
+
+impl Display for SetExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "(set-property {} {} {})",
+            self.object, self.name.lexeme, self.value
+        )
+    }
+}
+
+impl Display for ThisExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(this)")
     }
 }

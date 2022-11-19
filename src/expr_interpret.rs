@@ -43,6 +43,9 @@ impl Expr {
             Expr::AssignExpr(expr) => expr.eval(env, output),
             Expr::LogicalExpr(expr) => expr.eval(env, output),
             Expr::CallExpr(expr) => expr.eval(env, output),
+            Expr::GetExpr(expr) => expr.eval(env, output),
+            Expr::SetExpr(expr) => expr.eval(env, output),
+            Expr::ThisExpr(expr) => expr.eval(env, output),
         }
     }
 }
@@ -53,7 +56,14 @@ impl LiteralExpr {
         _env: &mut EnvironmentTree,
         _output: &mut T,
     ) -> Result<Rc<Literal>> {
-        Ok(Rc::new(self.value.clone()))
+        let l = match self.value {
+            Literal::Empty => Literal::Empty,
+            Literal::NumberLiteral(n) => Literal::NumberLiteral(n),
+            Literal::BoolLiteral(b) => Literal::BoolLiteral(b),
+            Literal::StringLiteral(ref s) => Literal::StringLiteral(s.clone()),
+            _ => unreachable!(), // parser should contruct only literal expr that contain primitves
+        };
+        Ok(Rc::new(l))
     }
 }
 
@@ -225,29 +235,15 @@ impl CallExpr {
 
         match callee.borrow() {
             Literal::FunctionLiteral(fun) => {
-                if args.len() != fun.arity() {
-                    return Err(RuntimeError::new(
-                        &self.paren,
-                        &format!(
-                            "Expected {} arguments but got {}. ",
-                            fun.arity(),
-                            args.len()
-                        ),
-                    ));
-                }
+                self.check_arity(args.len(), fun.arity())?;
                 Ok(fun.call(args, env, output)?)
             }
+            Literal::ClassLiteral(cls) => {
+                self.check_arity(args.len(), cls.arity())?;
+                Ok(cls.call(args, env, output)?)
+            }
             Literal::NativeFunctionLiteral(fun) => {
-                if args.len() != fun.arity() {
-                    return Err(RuntimeError::new(
-                        &self.paren,
-                        &format!(
-                            "Expected {} arguments but got {}. ",
-                            fun.arity(),
-                            args.len()
-                        ),
-                    ));
-                }
+                self.check_arity(args.len(), fun.arity())?;
                 Ok(fun.call(args)?)
             }
             _ => Err(RuntimeError::new(
@@ -255,5 +251,55 @@ impl CallExpr {
                 "Can only call functions and classes.",
             )),
         }
+    }
+
+    fn check_arity(&self, args_len: usize, arity: usize) -> Result<()> {
+        if args_len == arity {
+            Ok(())
+        } else {
+            Err(RuntimeError::new(
+                &self.paren,
+                &format!("Expected {} arguments but got {}. ", arity, args_len),
+            ))
+        }
+    }
+}
+
+impl GetExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let object = self.object.eval(env, output)?;
+        if let Literal::InstanceLiteral(instance) = object.borrow() {
+            instance.borrow().get(&self.name, env, object.clone())
+        } else {
+            Err(RuntimeError::new(
+                &self.name,
+                "Only instances have properties.",
+            ))
+        }
+    }
+}
+
+impl SetExpr {
+    pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
+        let object = self.object.eval(env, output)?;
+        if let Literal::InstanceLiteral(instance) = object.borrow() {
+            let value = self.value.eval(env, output)?;
+            instance
+                .borrow_mut()
+                .set(self.name.lexeme.clone(), value.clone());
+            Ok(value)
+        } else {
+            Err(RuntimeError::new(&self.name, "Only instances have fields."))
+        }
+    }
+}
+
+impl ThisExpr {
+    pub fn eval<T: Write>(
+        &self,
+        env: &mut EnvironmentTree,
+        _output: &mut T,
+    ) -> Result<Rc<Literal>> {
+        Ok(env.get(&self.keyword, self.scope_offset)?.clone())
     }
 }

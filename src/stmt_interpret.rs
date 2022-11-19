@@ -1,3 +1,4 @@
+use crate::class::LoxClass;
 use crate::environment::Environment;
 use crate::environment::EnvironmentTree;
 use crate::expr_interpret::RuntimeError;
@@ -5,6 +6,7 @@ use crate::function::LoxFunction;
 use crate::literal::Literal;
 use crate::statement::*;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
@@ -42,12 +44,13 @@ impl Stmt {
             Stmt::WhileStmt(s) => s.execute(env, output),
             Stmt::ReturnStmt(s) => s.execute(env, output),
             Stmt::FunctionStmt(s) => FunctionStmt::execute(s, env, output),
+            Stmt::ClassStmt(s) => s.execute(env, output),
         }
     }
 }
 
 impl PrintStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         let value = self.expr.eval(env, output)?;
         write!(output, "{value}\n")?;
         Ok(())
@@ -55,14 +58,14 @@ impl PrintStmt {
 }
 
 impl ExprStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         self.expr.eval(env, output)?;
         Ok(())
     }
 }
 
 impl VarStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         match self.value {
             Some(ref e) => {
                 let value = e.eval(env, output)?;
@@ -75,7 +78,7 @@ impl VarStmt {
 }
 
 impl BlockStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         // Note that it is important to keep the invariant regarding environment
         // Otherwise it might accidentally pop the root env and panic afterwards
         env.push(Environment::new());
@@ -88,7 +91,7 @@ impl BlockStmt {
 }
 
 impl IfStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         if self.condition.eval(env, output)?.is_truthy() {
             self.then_branch.execute(env, output)
         } else if let Some(ref s) = self.else_branch {
@@ -100,7 +103,7 @@ impl IfStmt {
 }
 
 impl WhileStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         while self.condition.eval(env, output)?.is_truthy() {
             self.body.execute(env, output)?;
         }
@@ -112,7 +115,7 @@ impl WhileStmt {
 // in general FunctionStmt is a special case that I should think about
 // gettting rid of, while not losing much of its benefits if possible
 impl FunctionStmt {
-    pub fn execute<T: Write>(
+    fn execute<T: Write>(
         self_: &Rc<RefCell<FunctionStmt>>,
         env: &mut EnvironmentTree,
         _output: &mut T,
@@ -128,11 +131,33 @@ impl FunctionStmt {
 }
 
 impl ReturnStmt {
-    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         if let Some(ref expr) = self.value {
             Err(ExecError::Return(expr.eval(env, output)?))
         } else {
             Err(ExecError::Return(Rc::new(Literal::Empty)))
         }
+    }
+}
+
+impl ClassStmt {
+    fn execute<T: Write>(&self, env: &mut EnvironmentTree, _output: &mut T) -> Result<()> {
+        env.define(self.name.lexeme.clone(), Rc::new(Literal::Empty));
+
+        // building methods
+        let cur_env = env.keep_branch();
+        let mut methods = HashMap::new();
+        for fs in &self.methods {
+            let method = LoxFunction::new(fs.clone(), cur_env);
+            methods.insert(fs.borrow().name.lexeme.clone(), method);
+        }
+
+        let class = LoxClass::new(self.name.lexeme.clone(), methods);
+        env.assign(
+            &self.name,
+            Rc::new(Literal::ClassLiteral(Rc::new(class))),
+            Some(0),
+        )?;
+        Ok(())
     }
 }

@@ -124,7 +124,9 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Stmt> {
-        if self.match_one(TokenType::FUN).is_some() {
+        if self.match_one(TokenType::CLASS).is_some() {
+            self.class_declaration()
+        } else if self.match_one(TokenType::FUN).is_some() {
             self.fun_declaration("function")
         } else if self.match_one(TokenType::VAR).is_some() {
             self.var_declaration()
@@ -133,7 +135,20 @@ impl Parser {
         }
     }
 
-    fn fun_declaration(&mut self, kind: &str) -> Result<Stmt> {
+    fn class_declaration(&mut self) -> Result<Stmt> {
+        let name = self.expect_one(TokenType::IDENTIFIER, "Expect class name.")?;
+
+        self.expect_one(TokenType::LEFT_BRACE, "Expect '{' before class body.")?;
+        let mut methods = vec![];
+        while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            methods.push(Rc::new(RefCell::new(self.function("method")?)));
+        }
+        self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after class body.")?;
+
+        Ok(Stmt::ClassStmt(ClassStmt { name, methods }))
+    }
+
+    fn function(&mut self, kind: &str) -> Result<FunctionStmt> {
         let name = self.expect_one(TokenType::IDENTIFIER, &format!("Expect {} name.", kind))?;
         self.expect_one(
             TokenType::LEFT_PAREN,
@@ -167,12 +182,12 @@ impl Parser {
             body.push(self.declaration()?);
         }
         self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after body.")?;
+        Ok(FunctionStmt { name, params, body })
+    }
 
-        Ok(Stmt::FunctionStmt(Rc::new(RefCell::new(FunctionStmt {
-            name,
-            params,
-            body,
-        }))))
+    fn fun_declaration(&mut self, kind: &str) -> Result<Stmt> {
+        let fun = self.function(kind)?;
+        Ok(Stmt::FunctionStmt(Rc::new(RefCell::new(fun))))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt> {
@@ -337,6 +352,14 @@ impl Parser {
                         scope_offset: None,
                     })));
                 }
+                Expr::GetExpr(e) => {
+                    let value = self.assignment()?;
+                    return Ok(Box::new(Expr::SetExpr(SetExpr {
+                        object: e.object,
+                        name: e.name,
+                        value,
+                    })));
+                }
                 _ => {
                     return Err(ParsingError::new(&token, "Invalid assignment target."));
                 }
@@ -454,6 +477,10 @@ impl Parser {
         loop {
             if self.match_one(TokenType::LEFT_PAREN).is_some() {
                 expr = self.finish_call(expr)?;
+            } else if self.match_one(TokenType::DOT).is_some() {
+                let name =
+                    self.expect_one(TokenType::IDENTIFIER, "Expect property name after '.'.")?;
+                expr = Box::new(Expr::GetExpr(GetExpr { object: expr, name }))
             } else {
                 break;
             }
@@ -506,6 +533,14 @@ impl Parser {
         {
             return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
                 value: token.literal,
+            })));
+        }
+
+        // this
+        if let Some(token) = self.match_one(TokenType::THIS) {
+            return Ok(Box::new(Expr::ThisExpr(ThisExpr {
+                keyword: token,
+                scope_offset: None,
             })));
         }
 

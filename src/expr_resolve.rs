@@ -35,12 +35,15 @@ impl Expr {
             Expr::AssignExpr(expr) => expr.resolve(resolver),
             Expr::LogicalExpr(expr) => expr.resolve(resolver),
             Expr::CallExpr(expr) => expr.resolve(resolver),
+            Expr::GetExpr(expr) => expr.resolve(resolver),
+            Expr::SetExpr(expr) => expr.resolve(resolver),
+            Expr::ThisExpr(expr) => expr.resolve(resolver),
         }
     }
 }
 
 impl VarExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         if let Some(&b) = resolver.get(&self.name) {
             if b == false {
                 return Err(ResolutionError::new(
@@ -56,7 +59,7 @@ impl VarExpr {
 }
 
 impl AssignExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.value.resolve(resolver)?;
         self.scope_offset = resolver.resolve_local(&self.name);
         Ok(())
@@ -64,20 +67,20 @@ impl AssignExpr {
 }
 
 impl BinaryExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.left.resolve(resolver)?;
         self.right.resolve(resolver)
     }
 }
 
 impl UnaryExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.right.resolve(resolver)
     }
 }
 
 impl CallExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.callee.resolve(resolver)?;
         for a in self.args.iter_mut() {
             a.resolve(resolver)?;
@@ -87,20 +90,40 @@ impl CallExpr {
 }
 
 impl GroupingExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.expr.resolve(resolver)
     }
 }
 
 impl LiteralExpr {
-    pub fn resolve(&mut self, _resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, _resolver: &mut Resolver) -> Result<()> {
         Ok(())
     }
 }
 
 impl LogicalExpr {
-    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.left.resolve(resolver)?;
         self.right.resolve(resolver)
+    }
+}
+
+impl GetExpr {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        self.object.resolve(resolver)
+    }
+}
+
+impl SetExpr {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        self.object.resolve(resolver)?;
+        self.value.resolve(resolver)
+    }
+}
+
+impl ThisExpr {
+    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        self.scope_offset = resolver.resolve_local(&self.keyword);
+        Ok(())
     }
 }

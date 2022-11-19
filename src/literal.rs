@@ -1,15 +1,30 @@
+use crate::class::LoxClass;
 use crate::function::LoxFunction;
-use crate::function::NativeFunction;
+use crate::instance::LoxInstance;
+use crate::native_function::NativeFunction;
+use std::cell::RefCell;
 use std::fmt;
+use std::rc::Rc;
 
-#[derive(Clone, PartialEq)]
+// Note:
+// LoxClass is in Rc because it can be owned by mutiple instances
+// LoxInstance is in RefCell because it needs to support
+// mutation of its fields through Rc<Literal>
+#[derive(PartialEq)]
 pub enum Literal {
+    // primitive
+    // these could be created from the parsing phase
     Empty,
     StringLiteral(String),
     BoolLiteral(bool),
     NumberLiteral(f64),
+
+    // run-time types
+    // these should only be created from the interpreting phase
     FunctionLiteral(LoxFunction),
     NativeFunctionLiteral(NativeFunction),
+    ClassLiteral(Rc<LoxClass>),
+    InstanceLiteral(RefCell<LoxInstance>),
 }
 
 impl fmt::Display for Literal {
@@ -21,6 +36,8 @@ impl fmt::Display for Literal {
             Literal::BoolLiteral(b) => write!(f, "{}", b),
             Literal::FunctionLiteral(ref fun) => write!(f, "{}", fun),
             Literal::NativeFunctionLiteral(ref fun) => write!(f, "{}", fun),
+            Literal::ClassLiteral(ref c) => write!(f, "{}", c),
+            Literal::InstanceLiteral(ref i) => write!(f, "{}", i.borrow()),
         }
     }
 }
