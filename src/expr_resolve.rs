@@ -1,4 +1,5 @@
 use crate::expr::*;
+use crate::resolver::ClassType;
 use crate::resolver::ResolutionError;
 use crate::resolver::Resolver;
 use crate::resolver::Result;
@@ -102,6 +103,12 @@ impl SetExpr {
 
 impl ThisExpr {
     fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        if resolver.current_cls == ClassType::NonClass {
+            return Err(ResolutionError::new(
+                &self.keyword,
+                "Can't use 'this' outside of a class.",
+            ));
+        }
         self.scope_offset = resolver.resolve_local(&self.keyword);
         Ok(())
     }

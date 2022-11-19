@@ -3,6 +3,7 @@ use test_case::test_case;
 
 mod common;
 
+#[test_case("invalid_this", false, true; "Invalid use of this")]
 #[test_case("instance_methods", true, false; "Calling methods of an instance")]
 #[test_case("instance_fields", true, true; "Getting and setting fields of an instance")]
 fn ch12_test(test_name: &str, check_output: bool, check_error: bool) {

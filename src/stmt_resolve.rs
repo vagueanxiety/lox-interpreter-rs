@@ -1,3 +1,4 @@
+use crate::resolver::ClassType;
 use crate::resolver::FunctionType;
 use crate::resolver::ResolutionError;
 use crate::resolver::Result;
@@ -118,6 +119,9 @@ impl WhileStmt {
 
 impl ClassStmt {
     fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        let mut current_cls = ClassType::Class;
+        mem::swap(&mut current_cls, &mut resolver.current_cls);
+
         resolver.declare(&self.name)?;
         resolver.define(&self.name);
 
@@ -132,6 +136,8 @@ impl ClassStmt {
         }
 
         resolver.end_scope();
+
+        mem::swap(&mut current_cls, &mut resolver.current_cls);
         Ok(())
     }
 }

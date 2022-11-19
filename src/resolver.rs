@@ -12,6 +12,12 @@ pub enum FunctionType {
     Method,
 }
 
+#[derive(PartialEq)]
+pub enum ClassType {
+    NonClass,
+    Class,
+}
+
 #[derive(Debug)]
 pub struct ResolutionError {
     pub msg: String,
@@ -37,6 +43,7 @@ pub type Result<T> = std::result::Result<T, ResolutionError>;
 pub struct Resolver {
     scopes: Vec<Scope>,
     pub current_fun: FunctionType,
+    pub current_cls: ClassType,
 }
 
 impl Resolver {
@@ -44,6 +51,7 @@ impl Resolver {
         Resolver {
             scopes: vec![],
             current_fun: FunctionType::NonFun,
+            current_cls: ClassType::NonClass,
         }
     }
 
