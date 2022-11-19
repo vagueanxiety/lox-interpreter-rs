@@ -1,5 +1,6 @@
-use crate::expr_resolve::{ResolutionError, Result};
 use crate::resolver::FunctionType;
+use crate::resolver::ResolutionError;
+use crate::resolver::Result;
 use crate::statement::*;
 use crate::{resolver::Resolver, statement::Stmt};
 use std::mem;

@@ -6,7 +6,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::{fmt::Display, io::Write, rc::Rc};
 
-// TODO: clone or not clone?
 #[derive(PartialEq)]
 pub struct LoxClass {
     pub name: String,

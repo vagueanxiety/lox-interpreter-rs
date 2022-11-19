@@ -21,7 +21,6 @@ impl Display for Expr {
     }
 }
 
-// TODO: macro to reduce boilder plate?
 impl Display for LiteralExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.value {
@@ -29,10 +28,7 @@ impl Display for LiteralExpr {
             Literal::StringLiteral(_) => write!(f, "(string \"{}\")", self.value),
             Literal::NumberLiteral(_) => write!(f, "(number {})", self.value),
             Literal::BoolLiteral(_) => write!(f, "(bool {})", self.value),
-            Literal::FunctionLiteral(_) => write!(f, "(function {})", self.value),
-            Literal::NativeFunctionLiteral(_) => write!(f, "(native-function {})", self.value),
-            Literal::ClassLiteral(_) => write!(f, "(class {})", self.value),
-            Literal::InstanceLiteral(_) => write!(f, "(instance {})", self.value),
+            _ => unreachable!(), // parser should contruct only literal expr that contain primitves
         }
     }
 }

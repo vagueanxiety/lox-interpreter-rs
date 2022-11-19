@@ -18,7 +18,7 @@ pub struct LoxInstance {
 
 impl Display for LoxInstance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "instance of {}", self.class)
+        write!(f, "instance of class {}", self.class)
     }
 }
 

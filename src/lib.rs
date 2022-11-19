@@ -21,6 +21,9 @@ mod stmt_display;
 mod stmt_interpret;
 mod stmt_resolve;
 
+use std::rc::Rc;
+use std::{error::Error, io::Write};
+
 use environment::EnvironmentTree;
 use literal::Literal;
 use native_function::clock;
@@ -29,8 +32,6 @@ use native_function::NativeFunction;
 use parser::Parser;
 use resolver::Resolver;
 use scanner::Scanner;
-use std::rc::Rc;
-use std::{error::Error, io::Write};
 use stmt_interpret::ExecError;
 
 pub use native_function::LOX_ASCII;

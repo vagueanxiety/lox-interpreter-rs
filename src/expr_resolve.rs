@@ -1,28 +1,7 @@
 use crate::expr::*;
-use crate::{resolver::Resolver, token::Token};
-use std::{error::Error, fmt};
-
-#[derive(Debug)]
-pub struct ResolutionError {
-    pub msg: String,
-}
-
-impl fmt::Display for ResolutionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ResolutionError: {}", self.msg)
-    }
-}
-
-impl ResolutionError {
-    pub fn new(t: &Token, msg: &str) -> ResolutionError {
-        let full_msg = format!("[line {}] {}", t.line, msg);
-        ResolutionError { msg: full_msg }
-    }
-}
-
-impl Error for ResolutionError {}
-
-pub type Result<T> = std::result::Result<T, ResolutionError>;
+use crate::resolver::ResolutionError;
+use crate::resolver::Resolver;
+use crate::resolver::Result;
 
 impl Expr {
     pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {

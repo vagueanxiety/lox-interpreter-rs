@@ -1,7 +1,7 @@
-use crate::expr_resolve::{ResolutionError, Result};
 use crate::statement::Stmt;
 use crate::token::Token;
 use std::collections::HashMap;
+use std::{error::Error, fmt};
 
 type Scope = HashMap<String, bool>;
 
@@ -11,6 +11,28 @@ pub enum FunctionType {
     Fun,
     Method,
 }
+
+#[derive(Debug)]
+pub struct ResolutionError {
+    pub msg: String,
+}
+
+impl fmt::Display for ResolutionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ResolutionError: {}", self.msg)
+    }
+}
+
+impl ResolutionError {
+    pub fn new(t: &Token, msg: &str) -> ResolutionError {
+        let full_msg = format!("[line {}] {}", t.line, msg);
+        ResolutionError { msg: full_msg }
+    }
+}
+
+impl Error for ResolutionError {}
+
+pub type Result<T> = std::result::Result<T, ResolutionError>;
 
 pub struct Resolver {
     scopes: Vec<Scope>,
