@@ -269,7 +269,7 @@ impl GetExpr {
     pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
         let object = self.object.eval(env, output)?;
         if let Literal::InstanceLiteral(instance) = object.borrow() {
-            instance.borrow().get(&self.name, env, object.clone())
+            instance.borrow_mut().get(&self.name, env, object.clone())
         } else {
             Err(RuntimeError::new(
                 &self.name,

@@ -14,6 +14,7 @@ use std::{fmt::Display, rc::Rc};
 pub struct LoxInstance {
     class: Rc<LoxClass>,
     fields: HashMap<String, Rc<Literal>>,
+    bound_methods: HashMap<String, Rc<Literal>>,
 }
 
 impl Display for LoxInstance {
@@ -27,19 +28,26 @@ impl LoxInstance {
         LoxInstance {
             class,
             fields: HashMap::new(),
+            bound_methods: HashMap::new(),
         }
     }
 
     pub fn get(
-        &self,
+        &mut self,
         name: &Token,
         env: &mut EnvironmentTree,
         instance: Rc<Literal>,
     ) -> Result<Rc<Literal>> {
         if let Some(f) = self.fields.get(&name.lexeme) {
             Ok(f.clone())
+        } else if let Some(bm) = self.bound_methods.get(&name.lexeme) {
+            // method is already bound and so reuse it
+            Ok(bm.clone())
         } else if let Some(m) = self.class.methods.get(&name.lexeme) {
-            Ok(Rc::new(Literal::FunctionLiteral(m.bind(env, instance))))
+            let bound_method = Rc::new(Literal::FunctionLiteral(m.bind(env, instance)));
+            self.bound_methods
+                .insert(name.lexeme.clone(), bound_method.clone());
+            Ok(bound_method)
         } else {
             Err(RuntimeError::new(
                 name,
