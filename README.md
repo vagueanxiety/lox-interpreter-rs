@@ -25,7 +25,7 @@ Yet another [Lox](https://craftinginterpreters.com/the-lox-language.html) interp
 >> 
 ```
 
-This is just for myself to learn Rust while reading the book "Crafting Interpreters" by Robert Nystrom.
+This is just for myself to learn Rust while reading the book "[Crafting Interpreters](https://craftinginterpreters.com/)" by Robert Nystrom.
 
 ## Usage
 ```
