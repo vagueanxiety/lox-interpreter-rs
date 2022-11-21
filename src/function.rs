@@ -51,10 +51,7 @@ impl LoxFunction {
         let prev = env.checkout(self.closure);
         let mut return_value = Rc::new(Literal::Empty);
         if self.is_initializer {
-            return_value = env
-                .get_at("this", Some(0))
-                .expect("Missing instance")
-                .clone()
+            return_value = env.get_at("this", 0).expect("Missing instance").clone()
         }
 
         env.push(Environment::new());

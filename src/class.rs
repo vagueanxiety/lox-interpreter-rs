@@ -10,6 +10,7 @@ use std::{fmt::Display, io::Write, rc::Rc};
 pub struct LoxClass {
     pub name: String,
     pub methods: HashMap<String, LoxFunction>,
+    pub superclass: Option<Rc<LoxClass>>,
 }
 
 impl Display for LoxClass {
@@ -19,8 +20,16 @@ impl Display for LoxClass {
 }
 
 impl LoxClass {
-    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> Self {
-        LoxClass { name, methods }
+    pub fn new(
+        name: String,
+        methods: HashMap<String, LoxFunction>,
+        superclass: Option<Rc<LoxClass>>,
+    ) -> Self {
+        LoxClass {
+            name,
+            methods,
+            superclass,
+        }
     }
 
     pub fn call<T: Write>(
@@ -42,10 +51,14 @@ impl LoxClass {
     }
 
     pub fn arity(&self) -> usize {
-        if let Some(i) = self.methods.get("init") {
-            i.arity()
-        } else {
-            0
-        }
+        self.methods.get("init").map_or(0, |m| m.arity())
+    }
+
+    pub fn find_method(&self, name: &str) -> Option<&LoxFunction> {
+        self.methods.get(name).or_else(|| {
+            self.superclass
+                .as_ref()
+                .map_or(None, |sc| sc.find_method(name))
+        })
     }
 }

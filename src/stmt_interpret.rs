@@ -50,7 +50,7 @@ impl Stmt {
 }
 
 impl PrintStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         let value = self.expr.eval(env, output)?;
         write!(output, "{value}\n")?;
         Ok(())
@@ -58,14 +58,14 @@ impl PrintStmt {
 }
 
 impl ExprStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         self.expr.eval(env, output)?;
         Ok(())
     }
 }
 
 impl VarStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         match self.value {
             Some(ref e) => {
                 let value = e.eval(env, output)?;
@@ -78,7 +78,7 @@ impl VarStmt {
 }
 
 impl BlockStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         // Note that it is important to keep the invariant regarding environment
         // Otherwise it might accidentally pop the root env and panic afterwards
         env.push(Environment::new());
@@ -91,7 +91,7 @@ impl BlockStmt {
 }
 
 impl IfStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         if self.condition.eval(env, output)?.is_truthy() {
             self.then_branch.execute(env, output)
         } else if let Some(ref s) = self.else_branch {
@@ -103,7 +103,7 @@ impl IfStmt {
 }
 
 impl WhileStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         while self.condition.eval(env, output)?.is_truthy() {
             self.body.execute(env, output)?;
         }
@@ -115,7 +115,7 @@ impl WhileStmt {
 // in general FunctionStmt is a special case that I should think about
 // gettting rid of, while not losing much of its benefits if possible
 impl FunctionStmt {
-    fn execute<T: Write>(
+    pub fn execute<T: Write>(
         self_: &Rc<RefCell<FunctionStmt>>,
         env: &mut EnvironmentTree,
         _output: &mut T,
@@ -131,7 +131,7 @@ impl FunctionStmt {
 }
 
 impl ReturnStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         if let Some(ref expr) = self.value {
             Err(ExecError::Return(expr.eval(env, output)?))
         } else {
@@ -141,8 +141,31 @@ impl ReturnStmt {
 }
 
 impl ClassStmt {
-    fn execute<T: Write>(&self, env: &mut EnvironmentTree, _output: &mut T) -> Result<()> {
+    pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
+        // get superclass
+        let mut superclass = None;
+        if let Some(ref expr) = self.superclass {
+            if let Literal::ClassLiteral(ref cls) = *(expr.eval(env, output)?) {
+                superclass = Some(cls.clone());
+            } else {
+                return Err(ExecError::RuntimeError(RuntimeError::new(
+                    &expr.name,
+                    "Superclass must be a class.",
+                )));
+            }
+        }
+
+        // make the class itself visible to its methods
         env.define(self.name.lexeme.clone(), Rc::new(Literal::Empty));
+
+        // add superclass to env
+        if let Some(ref sc) = superclass {
+            env.push(Environment::new());
+            env.define(
+                "super".to_string(),
+                Rc::new(Literal::ClassLiteral(sc.clone())),
+            )
+        }
 
         // building methods
         let cur_env = env.keep_branch();
@@ -152,12 +175,18 @@ impl ClassStmt {
             methods.insert(fs.borrow().name.lexeme.clone(), method);
         }
 
-        let class = LoxClass::new(self.name.lexeme.clone(), methods);
+        // "pop" env for superclass
+        if superclass.is_some() {
+            env.pop();
+        }
+
+        let class = LoxClass::new(self.name.lexeme.clone(), methods, superclass);
         env.assign(
             &self.name,
             Rc::new(Literal::ClassLiteral(Rc::new(class))),
             Some(0),
         )?;
+
         Ok(())
     }
 }

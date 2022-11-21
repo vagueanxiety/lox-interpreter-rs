@@ -23,7 +23,7 @@ impl Stmt {
 }
 
 impl BlockStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.begin_scope();
         for s in self.statements.iter_mut() {
             s.resolve(resolver)?
@@ -34,7 +34,7 @@ impl BlockStmt {
 }
 
 impl VarStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.declare(&self.name)?;
         if let Some(ref mut initializer) = self.value {
             initializer.resolve(resolver)?;
@@ -45,7 +45,7 @@ impl VarStmt {
 }
 
 impl FunctionStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         resolver.declare(&self.name)?;
         resolver.define(&self.name);
         self.resolve_fn(resolver, FunctionType::Fun)
@@ -71,13 +71,13 @@ impl FunctionStmt {
 }
 
 impl ExprStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.expr.resolve(resolver)
     }
 }
 
 impl IfStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.condition.resolve(resolver)?;
         self.then_branch.resolve(resolver)?;
         if let Some(ref mut else_branch) = self.else_branch {
@@ -88,13 +88,13 @@ impl IfStmt {
 }
 
 impl PrintStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.expr.resolve(resolver)
     }
 }
 
 impl ReturnStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         if resolver.current_fun == FunctionType::NonFun {
             return Err(ResolutionError::new(
                 &self.keyword,
@@ -116,7 +116,7 @@ impl ReturnStmt {
 }
 
 impl WhileStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         self.condition.resolve(resolver)?;
         self.body.resolve(resolver)?;
         Ok(())
@@ -124,19 +124,43 @@ impl WhileStmt {
 }
 
 impl ClassStmt {
-    fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+    pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
+        // set current class type
         let mut current_cls = ClassType::Class;
         mem::swap(&mut current_cls, &mut resolver.current_cls);
 
         resolver.declare(&self.name)?;
         resolver.define(&self.name);
 
+        // resolve superclass if any
+        if let Some(ref mut superclass) = self.superclass {
+            resolver.current_cls = ClassType::Subclass;
+            if superclass.name.lexeme == self.name.lexeme {
+                return Err(ResolutionError::new(
+                    &superclass.name,
+                    "A class can't inherit from itself.",
+                ));
+            }
+            superclass.resolve(resolver)?;
+        }
+
+        // define "super"
+        if self.superclass.is_some() {
+            resolver.begin_scope();
+            resolver
+                .peek()
+                .expect("Empty scopes")
+                .insert("super".to_string(), true);
+        }
+
+        // define "this"
         resolver.begin_scope();
         resolver
             .peek()
             .expect("Empty scopes")
             .insert("this".to_string(), true);
 
+        // resolve methods
         for fs in &self.methods {
             let fun_type = if fs.borrow().name.lexeme == "init" {
                 FunctionType::Initializer
@@ -146,8 +170,15 @@ impl ClassStmt {
             fs.borrow_mut().resolve_fn(resolver, fun_type)?;
         }
 
+        // end scope for this
         resolver.end_scope();
 
+        // end scope for super
+        if self.superclass.is_some() {
+            resolver.end_scope();
+        }
+
+        // reset class type
         mem::swap(&mut current_cls, &mut resolver.current_cls);
         Ok(())
     }

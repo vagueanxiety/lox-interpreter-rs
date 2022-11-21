@@ -42,6 +42,6 @@ cargo test
 ```
 
 ## Caveats
-- Chapter 13 is WIP
 - Current implementation handles errors slightly differently from the Java
   version
+- No optimizations have been done and the performance is not great

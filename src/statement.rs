@@ -1,4 +1,4 @@
-use crate::expr::Expr;
+use crate::expr::{Expr, VarExpr};
 use crate::token::Token;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -62,4 +62,5 @@ pub struct ReturnStmt {
 pub struct ClassStmt {
     pub name: Token,
     pub methods: Vec<Rc<RefCell<FunctionStmt>>>,
+    pub superclass: Option<VarExpr>,
 }

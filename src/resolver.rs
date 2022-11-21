@@ -17,6 +17,7 @@ pub enum FunctionType {
 pub enum ClassType {
     NonClass,
     Class,
+    Subclass,
 }
 
 #[derive(Debug)]

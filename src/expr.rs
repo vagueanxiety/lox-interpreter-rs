@@ -13,6 +13,7 @@ pub enum Expr {
     GetExpr(GetExpr),
     SetExpr(SetExpr),
     ThisExpr(ThisExpr),
+    SuperExpr(SuperExpr),
 }
 
 pub struct LiteralExpr {
@@ -69,5 +70,11 @@ pub struct SetExpr {
 
 pub struct ThisExpr {
     pub keyword: Token,
+    pub scope_offset: Option<usize>,
+}
+
+pub struct SuperExpr {
+    pub keyword: Token,
+    pub method: Token,
     pub scope_offset: Option<usize>,
 }

@@ -138,6 +138,16 @@ impl Parser {
     fn class_declaration(&mut self) -> Result<Stmt> {
         let name = self.expect_one(TokenType::IDENTIFIER, "Expect class name.")?;
 
+        let superclass = if self.match_one(TokenType::LESS).is_some() {
+            let sc_name = self.expect_one(TokenType::IDENTIFIER, "Expect superclass name.")?;
+            Some(VarExpr {
+                name: sc_name,
+                scope_offset: None,
+            })
+        } else {
+            None
+        };
+
         self.expect_one(TokenType::LEFT_BRACE, "Expect '{' before class body.")?;
         let mut methods = vec![];
         while !self.check(TokenType::RIGHT_BRACE) && !self.is_at_end() {
@@ -145,7 +155,11 @@ impl Parser {
         }
         self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after class body.")?;
 
-        Ok(Stmt::ClassStmt(ClassStmt { name, methods }))
+        Ok(Stmt::ClassStmt(ClassStmt {
+            name,
+            methods,
+            superclass,
+        }))
     }
 
     fn function(&mut self, kind: &str) -> Result<FunctionStmt> {
@@ -533,6 +547,18 @@ impl Parser {
         {
             return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
                 value: token.literal,
+            })));
+        }
+
+        // super
+        if let Some(token) = self.match_one(TokenType::SUPER) {
+            self.expect_one(TokenType::DOT, "Expect '.' after 'super'.")?;
+            let method =
+                self.expect_one(TokenType::IDENTIFIER, "Expect superclass method name.")?;
+            return Ok(Box::new(Expr::SuperExpr(SuperExpr {
+                keyword: token,
+                method,
+                scope_offset: None,
             })));
         }
 

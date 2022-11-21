@@ -46,6 +46,7 @@ impl Expr {
             Expr::GetExpr(expr) => expr.eval(env, output),
             Expr::SetExpr(expr) => expr.eval(env, output),
             Expr::ThisExpr(expr) => expr.eval(env, output),
+            Expr::SuperExpr(expr) => expr.eval(env, output),
         }
     }
 }
@@ -301,5 +302,35 @@ impl ThisExpr {
         _output: &mut T,
     ) -> Result<Rc<Literal>> {
         Ok(env.get(&self.keyword, self.scope_offset)?.clone())
+    }
+}
+
+impl SuperExpr {
+    pub fn eval<T: Write>(
+        &self,
+        env: &mut EnvironmentTree,
+        _output: &mut T,
+    ) -> Result<Rc<Literal>> {
+        // kinda hacky
+        let offset = self.scope_offset.expect("Unresolved 'super'");
+        let Literal::ClassLiteral(ref superclass) = *(env
+            .get_at("super", offset)
+            .expect("Missing superclass")
+            .clone()) else {
+            panic!("'super' is not a class")
+        };
+
+        let this_literal = env
+            .get_at("this", offset - 1)
+            .expect("Missing instance")
+            .clone();
+
+        if let Literal::InstanceLiteral(ref instance) = *(this_literal.clone()) {
+            instance
+                .borrow_mut()
+                .get_super_method(superclass, &self.method, env, this_literal)
+        } else {
+            panic!("'this' is not an instance")
+        }
     }
 }
