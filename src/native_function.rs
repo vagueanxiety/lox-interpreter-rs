@@ -5,7 +5,7 @@ use std::fmt::Display;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub struct NativeFunction {
     name: &'static str,
     arity: usize,
@@ -28,10 +28,8 @@ impl NativeFunction {
     }
 
     pub fn call(&self, args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
-        (self.fun)(args).or_else(|error| {
-            Err(RuntimeError {
-                msg: format!("[@{}] {}", self.name, error.msg),
-            })
+        (self.fun)(args).map_err(|error| RuntimeError {
+            msg: format!("[@{}] {}", self.name, error.msg),
         })
     }
 
@@ -48,7 +46,7 @@ pub fn clock(_args: Vec<Rc<Literal>>) -> Result<Rc<Literal>> {
         Ok(Rc::new(Literal::NumberLiteral(secs)))
     } else {
         Err(RuntimeError {
-            msg: format!("Time went backwards!"),
+            msg: "Time went backwards!".to_string(),
         })
     }
 }

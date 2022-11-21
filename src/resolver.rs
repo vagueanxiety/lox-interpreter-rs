@@ -5,7 +5,7 @@ use std::{error::Error, fmt};
 
 type Scope = HashMap<String, bool>;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum FunctionType {
     NonFun,
     Fun,
@@ -13,7 +13,7 @@ pub enum FunctionType {
     Initializer,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum ClassType {
     NonClass,
     Class,

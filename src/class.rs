@@ -55,10 +55,8 @@ impl LoxClass {
     }
 
     pub fn find_method(&self, name: &str) -> Option<&LoxFunction> {
-        self.methods.get(name).or_else(|| {
-            self.superclass
-                .as_ref()
-                .map_or(None, |sc| sc.find_method(name))
-        })
+        self.methods
+            .get(name)
+            .or_else(|| self.superclass.as_ref().and_then(|sc| sc.find_method(name)))
     }
 }

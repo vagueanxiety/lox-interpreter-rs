@@ -40,6 +40,12 @@ pub struct Interpreter {
     env: EnvironmentTree,
 }
 
+impl Default for Interpreter {
+    fn default() -> Self {
+        Interpreter::new()
+    }
+}
+
 impl Interpreter {
     pub fn new() -> Interpreter {
         let mut i = Interpreter {
@@ -106,7 +112,7 @@ impl Interpreter {
         match self._run(source, output, error_output, debug) {
             Ok(x) => Ok(x),
             Err(err) => {
-                write!(error_output, "{}\n", err)?;
+                writeln!(error_output, "{}", err)?;
                 Err(err)
             }
         }

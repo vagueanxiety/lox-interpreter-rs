@@ -26,7 +26,7 @@ impl Expr {
 impl VarExpr {
     pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         if let Some(&b) = resolver.get(&self.name) {
-            if b == false {
+            if !b {
                 return Err(ResolutionError::new(
                     &self.name,
                     "Can't read local variable in its own initializer.",

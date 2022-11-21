@@ -54,7 +54,7 @@ pub struct LogicalExpr {
 pub struct CallExpr {
     pub callee: Box<Expr>,
     pub paren: Token,
-    pub args: Vec<Box<Expr>>,
+    pub args: Vec<Expr>,
 }
 
 pub struct GetExpr {

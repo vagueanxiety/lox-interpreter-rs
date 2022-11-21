@@ -148,29 +148,27 @@ impl Scanner {
     }
 
     fn match_next(&mut self, expected: char) -> bool {
-        if self.is_at_end() {
-            return false;
-        } else if self.source[self.current] != expected {
-            return false;
+        if self.is_at_end() || self.source[self.current] != expected {
+            false
         } else {
             self.current += 1;
-            return true;
+            true
         }
     }
 
     fn peek(&self) -> char {
         if self.is_at_end() {
-            return '\0';
+            '\0'
         } else {
-            return self.source[self.current];
+            self.source[self.current]
         }
     }
 
     fn peek_next(&self) -> char {
         if self.current + 1 >= self.source.len() {
-            return '\0';
+            '\0'
         } else {
-            return self.source[self.current + 1];
+            self.source[self.current + 1]
         }
     }
 
@@ -202,11 +200,11 @@ impl Scanner {
     }
 
     fn is_digit(c: char) -> bool {
-        c >= '0' && c <= '9'
+        ('0'..='9').contains(&c)
     }
 
     fn is_alpha(c: char) -> bool {
-        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+        ('a'..='z').contains(&c) || ('A'..='Z').contains(&c) || c == '_'
     }
 
     fn is_alpha_numeric(c: char) -> bool {

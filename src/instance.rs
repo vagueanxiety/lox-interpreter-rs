@@ -9,7 +9,8 @@ use std::{fmt::Display, rc::Rc};
 
 // Note that currently nothing stops you from putting an instance into
 // itself, even though it will create a reference cycle of Rc<Literal>.
-// We *might* be able to prevent it by doing some static analysis during variable resolution (but how do we handle a loop with
+// We *might* be able to prevent it by doing some static analysis during
+// variable resolution (but how do we handle a loop with
 // more than two Rc<Literal>?)
 
 #[derive(PartialEq)]

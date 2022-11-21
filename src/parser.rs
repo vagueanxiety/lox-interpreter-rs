@@ -114,7 +114,7 @@ impl Parser {
                 // them up the call chain
                 Err(e) => {
                     // still prints the error for now
-                    write!(error_output, "{e}\n")?;
+                    writeln!(error_output, "{e}")?;
                     self.synchronize();
                     continue;
                 }
@@ -512,7 +512,7 @@ impl Parser {
                         "Can't have more than 255 arguments.",
                     ));
                 }
-                args.push(self.expression()?);
+                args.push(*(self.expression()?));
                 if self.match_one(TokenType::COMMA).is_none() {
                     break;
                 }

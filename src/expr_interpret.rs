@@ -217,12 +217,10 @@ impl LogicalExpr {
             if lhs.is_truthy() {
                 return Ok(lhs);
             }
-        } else {
-            if !lhs.is_truthy() {
-                return Ok(lhs);
-            }
+        } else if !lhs.is_truthy() {
+            return Ok(lhs);
         }
-        Ok(self.right.eval(env, output)?)
+        self.right.eval(env, output)
     }
 }
 

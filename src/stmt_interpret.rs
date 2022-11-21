@@ -52,7 +52,7 @@ impl Stmt {
 impl PrintStmt {
     pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         let value = self.expr.eval(env, output)?;
-        write!(output, "{value}\n")?;
+        writeln!(output, "{value}")?;
         Ok(())
     }
 }

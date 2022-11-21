@@ -4,13 +4,13 @@ use std::fs;
 
 pub fn run_test(test_name: &str, check_output: bool, expect_error: bool) {
     let file_name = format!("tests/{test_name}.lox");
-    let input = fs::read_to_string(format!("{file_name}")).expect("Failed to read input file");
+    let input = fs::read_to_string(&file_name).expect("Failed to read input file");
 
     let mut output = Vec::new();
     let mut error_output = Vec::new();
 
     let mut it = Interpreter::new();
-    match it.run(input.to_string(), &mut output, &mut error_output, false) {
+    match it.run(input, &mut output, &mut error_output, false) {
         Ok(_) | Err(_) => {
             let output = String::from_utf8(output).expect("Not UTF-8");
             let error_output = String::from_utf8(error_output).expect("Not UTF-8");
