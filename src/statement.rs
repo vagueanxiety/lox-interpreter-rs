@@ -9,15 +9,15 @@ use std::rc::Rc;
 // mutate exprs within FunctionStmt to save scope_offset. And the
 // mutation is safe because only Resolver borrows it mutably and exclusively.
 pub enum Stmt {
-    ExprStmt(ExprStmt),
-    PrintStmt(PrintStmt),
-    VarStmt(VarStmt),
-    BlockStmt(BlockStmt),
-    IfStmt(IfStmt),
-    WhileStmt(WhileStmt),
-    FunctionStmt(Rc<RefCell<FunctionStmt>>),
-    ReturnStmt(ReturnStmt),
-    ClassStmt(ClassStmt),
+    Expr(ExprStmt),
+    Print(PrintStmt),
+    Var(VarStmt),
+    Block(BlockStmt),
+    If(IfStmt),
+    While(WhileStmt),
+    Function(Rc<RefCell<FunctionStmt>>),
+    Return(ReturnStmt),
+    Class(ClassStmt),
 }
 
 pub struct ExprStmt {

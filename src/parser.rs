@@ -155,7 +155,7 @@ impl Parser {
         }
         self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after class body.")?;
 
-        Ok(Stmt::ClassStmt(ClassStmt {
+        Ok(Stmt::Class(ClassStmt {
             name,
             methods,
             superclass,
@@ -201,7 +201,7 @@ impl Parser {
 
     fn fun_declaration(&mut self, kind: &str) -> Result<Stmt> {
         let fun = self.function(kind)?;
-        Ok(Stmt::FunctionStmt(Rc::new(RefCell::new(fun))))
+        Ok(Stmt::Function(Rc::new(RefCell::new(fun))))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt> {
@@ -216,7 +216,7 @@ impl Parser {
             "Expect ';' after variable declaration.",
         )?;
 
-        Ok(Stmt::VarStmt(VarStmt {
+        Ok(Stmt::Var(VarStmt {
             name: token,
             value: initializer,
         }))
@@ -247,7 +247,7 @@ impl Parser {
         }
 
         self.expect_one(TokenType::SEMICOLON, "Expect ';' after return value.")?;
-        Ok(Stmt::ReturnStmt(ReturnStmt { keyword, value }))
+        Ok(Stmt::Return(ReturnStmt { keyword, value }))
     }
 
     fn for_statetment(&mut self) -> Result<Stmt> {
@@ -262,7 +262,7 @@ impl Parser {
         };
 
         let condition = if self.check(TokenType::SEMICOLON) {
-            Box::new(Expr::LiteralExpr(LiteralExpr {
+            Box::new(Expr::Literal(LiteralExpr {
                 value: Literal::BoolLiteral(true),
             }))
         } else {
@@ -282,20 +282,20 @@ impl Parser {
 
         // including increment right after while body
         if let Some(i) = increment {
-            body = Stmt::BlockStmt(BlockStmt {
-                statements: vec![body, Stmt::ExprStmt(ExprStmt { expr: i })],
+            body = Stmt::Block(BlockStmt {
+                statements: vec![body, Stmt::Expr(ExprStmt { expr: i })],
             })
         }
 
         // constructing while
-        let mut while_stmt = Stmt::WhileStmt(WhileStmt {
+        let mut while_stmt = Stmt::While(WhileStmt {
             condition,
             body: Box::new(body),
         });
 
         // including initializer right before while statement
         if let Some(i) = initializer {
-            while_stmt = Stmt::BlockStmt(BlockStmt {
+            while_stmt = Stmt::Block(BlockStmt {
                 statements: vec![i, while_stmt],
             })
         }
@@ -308,7 +308,7 @@ impl Parser {
         let condition = self.expression()?;
         self.expect_one(TokenType::RIGHT_PAREN, "Expect ')' after while condition.")?;
         let body = Box::new(self.statement()?);
-        Ok(Stmt::WhileStmt(WhileStmt { condition, body }))
+        Ok(Stmt::While(WhileStmt { condition, body }))
     }
 
     fn if_statement(&mut self) -> Result<Stmt> {
@@ -322,7 +322,7 @@ impl Parser {
             else_branch = Some(Box::new(self.statement()?));
         }
 
-        Ok(Stmt::IfStmt(IfStmt {
+        Ok(Stmt::If(IfStmt {
             condition,
             then_branch,
             else_branch,
@@ -335,19 +335,19 @@ impl Parser {
             statements.push(self.declaration()?);
         }
         self.expect_one(TokenType::RIGHT_BRACE, "Expect '}' after block.")?;
-        Ok(Stmt::BlockStmt(BlockStmt { statements }))
+        Ok(Stmt::Block(BlockStmt { statements }))
     }
 
     fn print_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
         self.expect_one(TokenType::SEMICOLON, "Expect ';' after value.")?;
-        Ok(Stmt::PrintStmt(PrintStmt { expr }))
+        Ok(Stmt::Print(PrintStmt { expr }))
     }
 
     fn expr_statement(&mut self) -> Result<Stmt> {
         let expr = self.expression()?;
         self.expect_one(TokenType::SEMICOLON, "Expect ';' after expression.")?;
-        Ok(Stmt::ExprStmt(ExprStmt { expr }))
+        Ok(Stmt::Expr(ExprStmt { expr }))
     }
 
     fn expression(&mut self) -> Result<Box<Expr>> {
@@ -358,17 +358,17 @@ impl Parser {
         let expr = self.or()?;
         if let Some(token) = self.match_one(TokenType::EQUAL) {
             match *expr {
-                Expr::VarExpr(e) => {
+                Expr::Var(e) => {
                     let value = self.assignment()?;
-                    return Ok(Box::new(Expr::AssignExpr(AssignExpr {
+                    return Ok(Box::new(Expr::Assign(AssignExpr {
                         name: e.name,
                         value,
                         scope_offset: None,
                     })));
                 }
-                Expr::GetExpr(e) => {
+                Expr::Get(e) => {
                     let value = self.assignment()?;
-                    return Ok(Box::new(Expr::SetExpr(SetExpr {
+                    return Ok(Box::new(Expr::Set(SetExpr {
                         object: e.object,
                         name: e.name,
                         value,
@@ -387,7 +387,7 @@ impl Parser {
         let mut expr = self.and()?;
         while let Some(token) = self.match_one(TokenType::OR) {
             let rhs = self.and()?;
-            expr = Box::new(Expr::LogicalExpr(LogicalExpr {
+            expr = Box::new(Expr::Logical(LogicalExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -401,7 +401,7 @@ impl Parser {
         let mut expr = self.equality()?;
         while let Some(token) = self.match_one(TokenType::AND) {
             let rhs = self.equality()?;
-            expr = Box::new(Expr::LogicalExpr(LogicalExpr {
+            expr = Box::new(Expr::Logical(LogicalExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -418,7 +418,7 @@ impl Parser {
             self.match_one_of(vec![TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL])
         {
             let rhs = self.comparison()?;
-            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
+            expr = Box::new(Expr::Binary(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -437,7 +437,7 @@ impl Parser {
             TokenType::LESS_EQUAL,
         ]) {
             let rhs = self.term()?;
-            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
+            expr = Box::new(Expr::Binary(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -451,7 +451,7 @@ impl Parser {
         let mut expr = self.factor()?;
         while let Some(token) = self.match_one_of(vec![TokenType::PLUS, TokenType::MINUS]) {
             let rhs = self.factor()?;
-            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
+            expr = Box::new(Expr::Binary(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -465,7 +465,7 @@ impl Parser {
         let mut expr = self.unary()?;
         while let Some(token) = self.match_one_of(vec![TokenType::SLASH, TokenType::STAR]) {
             let rhs = self.unary()?;
-            expr = Box::new(Expr::BinaryExpr(BinaryExpr {
+            expr = Box::new(Expr::Binary(BinaryExpr {
                 left: expr,
                 operator: token,
                 right: rhs,
@@ -477,7 +477,7 @@ impl Parser {
     fn unary(&mut self) -> Result<Box<Expr>> {
         if let Some(token) = self.match_one_of(vec![TokenType::BANG, TokenType::MINUS]) {
             let rhs = self.unary()?;
-            Ok(Box::new(Expr::UnaryExpr(UnaryExpr {
+            Ok(Box::new(Expr::Unary(UnaryExpr {
                 operator: token,
                 right: rhs,
             })))
@@ -494,7 +494,7 @@ impl Parser {
             } else if self.match_one(TokenType::DOT).is_some() {
                 let name =
                     self.expect_one(TokenType::IDENTIFIER, "Expect property name after '.'.")?;
-                expr = Box::new(Expr::GetExpr(GetExpr { object: expr, name }))
+                expr = Box::new(Expr::Get(GetExpr { object: expr, name }))
             } else {
                 break;
             }
@@ -520,7 +520,7 @@ impl Parser {
         }
 
         let paren = self.expect_one(TokenType::RIGHT_PAREN, "Expect ')' after arguments.")?;
-        Ok(Box::new(Expr::CallExpr(CallExpr {
+        Ok(Box::new(Expr::Call(CallExpr {
             callee,
             paren,
             args,
@@ -530,13 +530,13 @@ impl Parser {
     fn primary(&mut self) -> Result<Box<Expr>> {
         // booleans are implemented as keywords in the scanner :/
         if self.match_one(TokenType::FALSE).is_some() {
-            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
+            return Ok(Box::new(Expr::Literal(LiteralExpr {
                 value: Literal::BoolLiteral(false),
             })));
         }
 
         if self.match_one(TokenType::TRUE).is_some() {
-            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
+            return Ok(Box::new(Expr::Literal(LiteralExpr {
                 value: Literal::BoolLiteral(true),
             })));
         }
@@ -545,7 +545,7 @@ impl Parser {
         if let Some(token) =
             self.match_one_of(vec![TokenType::NIL, TokenType::STRING, TokenType::NUMBER])
         {
-            return Ok(Box::new(Expr::LiteralExpr(LiteralExpr {
+            return Ok(Box::new(Expr::Literal(LiteralExpr {
                 value: token.literal,
             })));
         }
@@ -555,7 +555,7 @@ impl Parser {
             self.expect_one(TokenType::DOT, "Expect '.' after 'super'.")?;
             let method =
                 self.expect_one(TokenType::IDENTIFIER, "Expect superclass method name.")?;
-            return Ok(Box::new(Expr::SuperExpr(SuperExpr {
+            return Ok(Box::new(Expr::Super(SuperExpr {
                 keyword: token,
                 method,
                 scope_offset: None,
@@ -564,7 +564,7 @@ impl Parser {
 
         // this
         if let Some(token) = self.match_one(TokenType::THIS) {
-            return Ok(Box::new(Expr::ThisExpr(ThisExpr {
+            return Ok(Box::new(Expr::This(ThisExpr {
                 keyword: token,
                 scope_offset: None,
             })));
@@ -572,7 +572,7 @@ impl Parser {
 
         // variables
         if let Some(token) = self.match_one(TokenType::IDENTIFIER) {
-            return Ok(Box::new(Expr::VarExpr(VarExpr {
+            return Ok(Box::new(Expr::Var(VarExpr {
                 name: token,
                 scope_offset: None,
             })));
@@ -582,7 +582,7 @@ impl Parser {
         if self.match_one(TokenType::LEFT_PAREN).is_some() {
             let expr = self.expression()?;
             self.expect_one(TokenType::RIGHT_PAREN, "Expect ')' after expression.")?;
-            return Ok(Box::new(Expr::GroupingExpr(GroupingExpr { expr })));
+            return Ok(Box::new(Expr::Grouping(GroupingExpr { expr })));
         }
 
         Err(ParsingError::new(self.peek(), "Expect expression."))

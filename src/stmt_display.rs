@@ -5,15 +5,15 @@ use std::fmt::Display;
 impl Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Stmt::ExprStmt(s) => write!(f, "{}", s),
-            Stmt::PrintStmt(s) => write!(f, "{}", s),
-            Stmt::VarStmt(s) => write!(f, "{}", s),
-            Stmt::BlockStmt(s) => write!(f, "{}", s),
-            Stmt::IfStmt(s) => write!(f, "{}", s),
-            Stmt::WhileStmt(s) => write!(f, "{}", s),
-            Stmt::ReturnStmt(s) => write!(f, "{}", s),
-            Stmt::FunctionStmt(s) => write!(f, "{}", s.borrow()),
-            Stmt::ClassStmt(s) => write!(f, "{}", s),
+            Stmt::Expr(s) => write!(f, "{}", s),
+            Stmt::Print(s) => write!(f, "{}", s),
+            Stmt::Var(s) => write!(f, "{}", s),
+            Stmt::Block(s) => write!(f, "{}", s),
+            Stmt::If(s) => write!(f, "{}", s),
+            Stmt::While(s) => write!(f, "{}", s),
+            Stmt::Return(s) => write!(f, "{}", s),
+            Stmt::Function(s) => write!(f, "{}", s.borrow()),
+            Stmt::Class(s) => write!(f, "{}", s),
         }
     }
 }

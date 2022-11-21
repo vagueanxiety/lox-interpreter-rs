@@ -9,15 +9,15 @@ use std::mem;
 impl Stmt {
     pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         match self {
-            Stmt::ExprStmt(s) => s.resolve(resolver),
-            Stmt::PrintStmt(s) => s.resolve(resolver),
-            Stmt::VarStmt(s) => s.resolve(resolver),
-            Stmt::BlockStmt(s) => s.resolve(resolver),
-            Stmt::IfStmt(s) => s.resolve(resolver),
-            Stmt::WhileStmt(s) => s.resolve(resolver),
-            Stmt::ReturnStmt(s) => s.resolve(resolver),
-            Stmt::FunctionStmt(s) => s.borrow_mut().resolve(resolver),
-            Stmt::ClassStmt(s) => s.resolve(resolver),
+            Stmt::Expr(s) => s.resolve(resolver),
+            Stmt::Print(s) => s.resolve(resolver),
+            Stmt::Var(s) => s.resolve(resolver),
+            Stmt::Block(s) => s.resolve(resolver),
+            Stmt::If(s) => s.resolve(resolver),
+            Stmt::While(s) => s.resolve(resolver),
+            Stmt::Return(s) => s.resolve(resolver),
+            Stmt::Function(s) => s.borrow_mut().resolve(resolver),
+            Stmt::Class(s) => s.resolve(resolver),
         }
     }
 }

@@ -1,6 +1,7 @@
 use crate::literal::Literal;
 use std::fmt;
 
+#[allow(clippy::upper_case_acronyms)]
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum TokenType {

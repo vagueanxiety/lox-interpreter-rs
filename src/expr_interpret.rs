@@ -35,18 +35,18 @@ pub type Result<T> = std::result::Result<T, RuntimeError>;
 impl Expr {
     pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
         match self {
-            Expr::LiteralExpr(expr) => expr.eval(env, output),
-            Expr::BinaryExpr(expr) => expr.eval(env, output),
-            Expr::UnaryExpr(expr) => expr.eval(env, output),
-            Expr::GroupingExpr(expr) => expr.eval(env, output),
-            Expr::VarExpr(expr) => expr.eval(env, output),
-            Expr::AssignExpr(expr) => expr.eval(env, output),
-            Expr::LogicalExpr(expr) => expr.eval(env, output),
-            Expr::CallExpr(expr) => expr.eval(env, output),
-            Expr::GetExpr(expr) => expr.eval(env, output),
-            Expr::SetExpr(expr) => expr.eval(env, output),
-            Expr::ThisExpr(expr) => expr.eval(env, output),
-            Expr::SuperExpr(expr) => expr.eval(env, output),
+            Expr::Literal(expr) => expr.eval(env, output),
+            Expr::Binary(expr) => expr.eval(env, output),
+            Expr::Unary(expr) => expr.eval(env, output),
+            Expr::Grouping(expr) => expr.eval(env, output),
+            Expr::Var(expr) => expr.eval(env, output),
+            Expr::Assign(expr) => expr.eval(env, output),
+            Expr::Logical(expr) => expr.eval(env, output),
+            Expr::Call(expr) => expr.eval(env, output),
+            Expr::Get(expr) => expr.eval(env, output),
+            Expr::Set(expr) => expr.eval(env, output),
+            Expr::This(expr) => expr.eval(env, output),
+            Expr::Super(expr) => expr.eval(env, output),
         }
     }
 }

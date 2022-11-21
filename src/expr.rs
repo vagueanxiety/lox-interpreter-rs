@@ -2,18 +2,18 @@ use crate::literal::Literal;
 use crate::token::Token;
 
 pub enum Expr {
-    LiteralExpr(LiteralExpr),
-    BinaryExpr(BinaryExpr),
-    UnaryExpr(UnaryExpr),
-    GroupingExpr(GroupingExpr),
-    VarExpr(VarExpr),
-    AssignExpr(AssignExpr),
-    LogicalExpr(LogicalExpr),
-    CallExpr(CallExpr),
-    GetExpr(GetExpr),
-    SetExpr(SetExpr),
-    ThisExpr(ThisExpr),
-    SuperExpr(SuperExpr),
+    Literal(LiteralExpr),
+    Binary(BinaryExpr),
+    Unary(UnaryExpr),
+    Grouping(GroupingExpr),
+    Var(VarExpr),
+    Assign(AssignExpr),
+    Logical(LogicalExpr),
+    Call(CallExpr),
+    Get(GetExpr),
+    Set(SetExpr),
+    This(ThisExpr),
+    Super(SuperExpr),
 }
 
 pub struct LiteralExpr {

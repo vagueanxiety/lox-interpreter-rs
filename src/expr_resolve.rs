@@ -7,18 +7,18 @@ use crate::resolver::Result;
 impl Expr {
     pub fn resolve(&mut self, resolver: &mut Resolver) -> Result<()> {
         match self {
-            Expr::LiteralExpr(expr) => expr.resolve(resolver),
-            Expr::BinaryExpr(expr) => expr.resolve(resolver),
-            Expr::UnaryExpr(expr) => expr.resolve(resolver),
-            Expr::GroupingExpr(expr) => expr.resolve(resolver),
-            Expr::VarExpr(expr) => expr.resolve(resolver),
-            Expr::AssignExpr(expr) => expr.resolve(resolver),
-            Expr::LogicalExpr(expr) => expr.resolve(resolver),
-            Expr::CallExpr(expr) => expr.resolve(resolver),
-            Expr::GetExpr(expr) => expr.resolve(resolver),
-            Expr::SetExpr(expr) => expr.resolve(resolver),
-            Expr::ThisExpr(expr) => expr.resolve(resolver),
-            Expr::SuperExpr(expr) => expr.resolve(resolver),
+            Expr::Literal(expr) => expr.resolve(resolver),
+            Expr::Binary(expr) => expr.resolve(resolver),
+            Expr::Unary(expr) => expr.resolve(resolver),
+            Expr::Grouping(expr) => expr.resolve(resolver),
+            Expr::Var(expr) => expr.resolve(resolver),
+            Expr::Assign(expr) => expr.resolve(resolver),
+            Expr::Logical(expr) => expr.resolve(resolver),
+            Expr::Call(expr) => expr.resolve(resolver),
+            Expr::Get(expr) => expr.resolve(resolver),
+            Expr::Set(expr) => expr.resolve(resolver),
+            Expr::This(expr) => expr.resolve(resolver),
+            Expr::Super(expr) => expr.resolve(resolver),
         }
     }
 }

@@ -6,18 +6,18 @@ use std::fmt::Display;
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expr::LiteralExpr(expr) => write!(f, "{}", expr),
-            Expr::BinaryExpr(expr) => write!(f, "{}", expr),
-            Expr::UnaryExpr(expr) => write!(f, "{}", expr),
-            Expr::GroupingExpr(expr) => write!(f, "{}", expr),
-            Expr::VarExpr(expr) => write!(f, "{}", expr),
-            Expr::AssignExpr(expr) => write!(f, "{}", expr),
-            Expr::LogicalExpr(expr) => write!(f, "{}", expr),
-            Expr::CallExpr(expr) => write!(f, "{}", expr),
-            Expr::GetExpr(expr) => write!(f, "{}", expr),
-            Expr::SetExpr(expr) => write!(f, "{}", expr),
-            Expr::ThisExpr(expr) => write!(f, "{}", expr),
-            Expr::SuperExpr(expr) => write!(f, "{}", expr),
+            Expr::Literal(expr) => write!(f, "{}", expr),
+            Expr::Binary(expr) => write!(f, "{}", expr),
+            Expr::Unary(expr) => write!(f, "{}", expr),
+            Expr::Grouping(expr) => write!(f, "{}", expr),
+            Expr::Var(expr) => write!(f, "{}", expr),
+            Expr::Assign(expr) => write!(f, "{}", expr),
+            Expr::Logical(expr) => write!(f, "{}", expr),
+            Expr::Call(expr) => write!(f, "{}", expr),
+            Expr::Get(expr) => write!(f, "{}", expr),
+            Expr::Set(expr) => write!(f, "{}", expr),
+            Expr::This(expr) => write!(f, "{}", expr),
+            Expr::Super(expr) => write!(f, "{}", expr),
         }
     }
 }

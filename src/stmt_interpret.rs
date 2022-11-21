@@ -36,15 +36,15 @@ pub type Result<T> = std::result::Result<T, ExecError>;
 impl Stmt {
     pub fn execute<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<()> {
         match self {
-            Stmt::ExprStmt(s) => s.execute(env, output),
-            Stmt::PrintStmt(s) => s.execute(env, output),
-            Stmt::VarStmt(s) => s.execute(env, output),
-            Stmt::BlockStmt(s) => s.execute(env, output),
-            Stmt::IfStmt(s) => s.execute(env, output),
-            Stmt::WhileStmt(s) => s.execute(env, output),
-            Stmt::ReturnStmt(s) => s.execute(env, output),
-            Stmt::FunctionStmt(s) => FunctionStmt::execute(s, env, output),
-            Stmt::ClassStmt(s) => s.execute(env, output),
+            Stmt::Expr(s) => s.execute(env, output),
+            Stmt::Print(s) => s.execute(env, output),
+            Stmt::Var(s) => s.execute(env, output),
+            Stmt::Block(s) => s.execute(env, output),
+            Stmt::If(s) => s.execute(env, output),
+            Stmt::While(s) => s.execute(env, output),
+            Stmt::Return(s) => s.execute(env, output),
+            Stmt::Function(s) => FunctionStmt::execute(s, env, output),
+            Stmt::Class(s) => s.execute(env, output),
         }
     }
 }
