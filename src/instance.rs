@@ -41,7 +41,7 @@ impl LoxInstance {
         &mut self,
         name: &Token,
         env: &mut EnvironmentTree,
-        instance: Rc<Literal>,
+        instance: &Rc<Literal>,
     ) -> Result<Rc<Literal>> {
         if let Some(f) = self.fields.get(&name.lexeme) {
             Ok(f.clone())
@@ -49,7 +49,7 @@ impl LoxInstance {
             // method is already bound so reuse it
             Ok(bm.clone())
         } else if let Some(m) = self.class.find_method(&name.lexeme) {
-            let bound_method = Rc::new(Literal::FunctionLiteral(m.bind(env, instance)));
+            let bound_method = Rc::new(Literal::FunctionLiteral(m.bind(env, instance.clone())));
             self.bound_methods
                 .insert(name.lexeme.clone(), bound_method.clone());
             Ok(bound_method)
@@ -70,7 +70,7 @@ impl LoxInstance {
         superclass: &LoxClass,
         method: &Token,
         env: &mut EnvironmentTree,
-        instance: Rc<Literal>,
+        instance: &Rc<Literal>,
     ) -> Result<Rc<Literal>> {
         let method_name = &method.lexeme;
         let class_name = &superclass.name;
@@ -82,7 +82,8 @@ impl LoxInstance {
         if let Some(bound_method) = self.bound_super_methods.get(&hash) {
             return Ok(bound_method.clone());
         } else if let Some(method) = superclass.find_method(method_name) {
-            let bound_method = Rc::new(Literal::FunctionLiteral(method.bind(env, instance)));
+            let bound_method =
+                Rc::new(Literal::FunctionLiteral(method.bind(env, instance.clone())));
             self.bound_super_methods.insert(hash, bound_method.clone());
             return Ok(bound_method);
         }

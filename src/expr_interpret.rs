@@ -270,7 +270,7 @@ impl GetExpr {
     pub fn eval<T: Write>(&self, env: &mut EnvironmentTree, output: &mut T) -> Result<Rc<Literal>> {
         let object = self.object.eval(env, output)?;
         if let Literal::InstanceLiteral(instance) = object.borrow() {
-            instance.borrow_mut().get(&self.name, env, object.clone())
+            instance.borrow_mut().get(&self.name, env, &object)
         } else {
             Err(RuntimeError::new(
                 &self.name,
@@ -325,10 +325,10 @@ impl SuperExpr {
             .expect("Missing instance")
             .clone();
 
-        if let Literal::InstanceLiteral(ref instance) = *(this_literal.clone()) {
+        if let Literal::InstanceLiteral(ref instance) = *(this_literal) {
             instance
                 .borrow_mut()
-                .get_super_method(superclass, &self.method, env, this_literal)
+                .get_super_method(superclass, &self.method, env, &this_literal)
         } else {
             panic!("'this' is not an instance")
         }
